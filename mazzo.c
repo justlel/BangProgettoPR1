@@ -2,82 +2,93 @@
 
 
 /**
- * Carica dal file di testo "mazzo_bang.txt" un mazzo di carte. In particolare, il file è letto in modo che
+ * Funzione che carica dal file di testo "mazzo_bang.txt" un mazzo di carte. In particolare, il file è letto in modo che
  * ogni riga contenga le informazioni su una carta del mazzo, in ordine: tipologia di carta, numero della carta,
  * seme della carta e nome della carta.
+ * Dopo essere stato caricato dal file, il mazzo viene mischiato dalla funzione mischiaMazzo()
  * Se il file non è trovato, il programma si arresta.
  * Se vi sono dei problemi nell'allocazione dinamica dell'array di carte, il programma si arresta.
  *
- * @return Un puntatore a un mazzo di carte caricato dal file.
+ * @return Un mazzo di carte caricato dal file e mischiato.
  */
-Mazzo* caricaMazzo() {
+Mazzo caricaMazzo() {
     // apertura del file contenente le carte da caricare attraverso fopen()
     FILE* fileMazzo = NULL;
     fileMazzo = fopen("mazzo_bang.txt", "r");
+    // verifica della corretta apertura del file
     if(fileMazzo == NULL) {
         printf("Errore: impossibile aprire il file contenente le carte del mazzo. Arresto.");
         exit(-1);
     }
 
+    // inizializzazione di un puntatore allocato dinamicamente, che conterrà le carte da inserire nel mazzo
     Carta* carteMazzo = NULL;
-    Mazzo mazzo = {MAZZO_PESCA, 0, carteMazzo};
+    // inizializzazione del mazzo che sarà poi restituito dalla funzione
+    Mazzo mazzo = {MAZZO_PESCA, 0, NULL};
 
+    int read; // numero di byte letti dalla funzione fscanf
+    Carta cartaLetta; // carta letta in ogni iterazione del ciclo dalla funzione fscanf
     // lettura del file, linea per linea
-    int read = 0;
     do {
-        Carta cartaLetta;
         read = fscanf(fileMazzo,
-                      "%d, %d, %d, %s",
+                      "%d %d %d %s\n",
                       &cartaLetta.tipologiaCarta, &cartaLetta.numeroCarta, &cartaLetta.semeCarta, cartaLetta.nomeCarta);
+        // se sono stati letti 4 byte, significa che c'è una nuova carta da aggiungere al mazzo
         if(read == 4) {
             mazzo.numeroCarte += 1;
+            // riallocazione dinamica del puntatore alle carte del mazzo, per fare spazio alla nuova carta letta
             carteMazzo = (Carta*) realloc(carteMazzo, mazzo.numeroCarte * sizeof(Carta));
+            // verifica della corretta allocazione dinamica
             if(carteMazzo == NULL) {
                 printf("Errore: impossibile allocare dinamicamente il mazzo di carte. Arresto.");
                 exit(-1);
             } else {
+                // l'ultima carta letta diventa l'ultima carta del mazzo
                 carteMazzo[mazzo.numeroCarte - 1] = cartaLetta;
             }
         }
     } while(read == 4);
+    // il puntatore contenente le carte lette viene inserito nella struct "mazzo"
+    mazzo.carte = carteMazzo;
 
+    // chiusura del file, ora che è stato letto
+    fclose(fileMazzo);
+
+    // il mazzo con le carte letto viene ora passato come puntatore a "mischiaMazzo" per rondomizzare l'ordine delle carte
     mischiaMazzo(&mazzo);
+
+    // restituisci il mazzo letto e mischiato
+    return mazzo;
 }
 
+/**
+ * Subroutine che si occupa di mischiare il mazzo di carte appena caricato dal file di testo.
+ * La randomizzazione dell'ordine segue questa logica: si itera sulle carte del mazzo, e ogni carta
+ * viene scambiata con una carta in una posizione randomica all'interno del mazzo, fino ad arrivare
+ * all'ultima carta.
+ * Nella chiamata della funzione, viene re-inizializzato il seed per la generazione randomica tramite
+ * una chiamata alla funzione "srand()".
+ *
+ * @param mazzo Il mazzo di carte da mischiare.
+ */
 void mischiaMazzo(Mazzo* mazzo) {
     // TODO: nel caso, raccogliere in un altro file
     srand(time(NULL));
 
-    int shuffled;
-    Carta tmpShuffled;
+    int shuffled; // indice della carta estratta per essere scambiata con quella iterata nel ciclo
+    Carta tmpShuffled; // carta che sarà scambiata con quella estratta randomicamente
     for(int i = 0; i < mazzo->numeroCarte; i++) {
         do {
-            shuffled = rand() % mazzo->numeroCarte;
-        } while(shuffled == i);
+            shuffled = rand() % mazzo->numeroCarte; // estrazione di un indice tra 0 e numeroCarte - 1
+        } while(shuffled == i); // evito che la carta estratta per essere scambiata sia la stessa di quella iterata
+        // scambio delle due carte
         tmpShuffled = mazzo->carte[i];
         mazzo->carte[i] = mazzo->carte[shuffled];
         mazzo->carte[shuffled] = tmpShuffled;
     }
 }
 
-void assegnaCarte(Mazzo* mazzo, Giocatore* giocatori, int nGiocatori) {
-    Mazzo* mazzoModificato = mazzo;
-    for(int i = 0; i < nGiocatori; i++) {
-        giocatori[i].carteMano = (Carta*) calloc(giocatori->puntiVita, sizeof(Carta));
-        // TODO: nel caso, raccogliere in un altro file
-        if(giocatori[i].carteMano == NULL) {
-            printf("Errore: impossibile allocare dinamicamente il mazzo di carte del giocatore. Arresto.");
-            exit(-1);
-        }
-        for(int j = 0; j < giocatori[i].puntiVita; j++) {
-            giocatori[i].carteMano[j] = mazzoModificato->carte[j];
-        }
-        scartaCima(mazzo, giocatori[i].puntiVita);
-        mazzo->numeroCarte -= giocatori[i].puntiVita;
-    }
-}
-
-void scartaCima(Mazzo* mazzo, int daScartare) {
+void scartaCimaMazzo(Mazzo* mazzo, int daScartare) {
     mazzo->carte = (Carta*) realloc(mazzo->carte, (mazzo->numeroCarte - daScartare) * sizeof(Carta));
     // TODO: nel caso, raccogliere in un altro file
     if(mazzo->carte == NULL) {

@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "giocatore.h"
+#include <stdbool.h>
+#include "mazzo.h"
 
 // -------- MACRO RELATIVE ALLE IMPOSTAZIONI DELLA PARTITA --------
 /**

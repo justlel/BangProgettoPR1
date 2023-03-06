@@ -20,10 +20,10 @@ typedef struct {
     Carta* carte;
 } Mazzo;
 
-Mazzo* caricaMazzo();
+Mazzo caricaMazzo();
 
 void mischiaMazzo(Mazzo* mazzo);
 
-void assegnaCarte(Mazzo* mazzo, Giocatore* giocatori, int nGiocatori);
+void distribuisciCartePartenza(Mazzo* mazzo, Giocatore* giocatori, int nGiocatori);
 
-void scartaCima(Mazzo* mazzo, int daScartare);
+void scartaCimaMazzo(Mazzo* mazzo, int daScartare);

@@ -11,6 +11,7 @@
 #define ROLES_NUMBER 4
 
 /**
+ * Interi contenenti i numeri di punti vita dello sceriffo e degli altri ruoli.
  * Lo sceriffo è l'unico ruolo ad avere più punti vita degli altri giocatori, le cui "pallottole" sono segnate dalla
  * macro "PUNTI_VITA_GENERICO".
  */
@@ -20,7 +21,7 @@
 /**
  * Enumerazione contenente i vari ruoli che un giocatore
  * può assumere durante la partita. Il ruolo di un giocatore
- * è assegnato in base al numero dei partecipanti totali.
+ * è assegnato in base al numero dei partecipanti totali
  */
 typedef enum {SCERIFFO, VICESCERIFFO, FUORILEGGE, RINNEGATO} Ruoli;
 

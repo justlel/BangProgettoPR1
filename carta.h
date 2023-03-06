@@ -1,4 +1,8 @@
-#define NOME_CARTA_LEN 14 // lunghezza massima del nome di una carta ('\0' escluso)
+
+/**
+ * Intero contenente la lunghezza massima del nome di una carta ('\0' escluso)
+ */
+#define NOME_CARTA_LEN 14
 
 /**
  * Enumerazione contenente i tipi che possono essere assegnati ad una carta.
