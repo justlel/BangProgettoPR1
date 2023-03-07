@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include <stdbool.h>
+#include <string.h>
 #include "mazzo.h"
+#include "savegame.h"
+
 
 // -------- MACRO RELATIVE ALLE IMPOSTAZIONI DELLA PARTITA --------
 /**
@@ -27,10 +30,12 @@
 
 void avvioGioco();
 
-void caricaSalvataggio();
+Salvataggio caricaPartita();
 
-void creaPartita();
+Salvataggio creaPartita();
 
 void assegnaRuoli(Giocatore* giocatori, int nGiocatori);
+
+void avviaPartita(Salvataggio partita);
 
 void chiudiGioco();

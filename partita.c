@@ -24,27 +24,36 @@ void avvioGioco() {
             printf("\nInserisci una delle opzioni possibili!\n");
     } while (choice != PROMPT_CARICA_PARTITA && choice != PROMPT_NUOVA_PARTITA && choice != PROMPT_EXIT);
 
+    Salvataggio partita;
     // da qui, il controllo del flusso di esecuzione è affidato a una delle due funzioni che si occupano di creare/caricare
     // una partita, oppure il programma termina sotto scelta dell'utente.
     switch (choice) {
         case PROMPT_CARICA_PARTITA:
-            // caricaSalvataggio();
-            printf("Opzione non ancora disponibile!");
-            chiudiGioco();
+            partita = caricaPartita();
             break;
         case PROMPT_NUOVA_PARTITA:
-            creaPartita();
+            partita = creaPartita();
             break;
         case PROMPT_EXIT:
+        default:
             chiudiGioco();
             break;
     }
+
+    // avvia la partita scelta
+    avviaPartita(partita);
 }
 
 /**
- * Subroutine che genera una partita a partire dalle informazioni fornite dal giocatore.
+ * Funzione che genera una partita a partire dalle informazioni fornite dal giocatore.
+ * Le informazioni della partita sono restituite in una struttura "Salvataggio" apposita.
+ *
+ * @return La partita generata dalle informazioni fornite.
  */
-void creaPartita() {
+Salvataggio creaPartita() {
+    // salvataggio da restituire
+    Salvataggio partita;
+
     printf("\nBene, iniziamo allora! Bang! è un gioco multiplayer, a cui è possibile "
            "giocare in compagnia da un minimo di %d a un massimo di %d persone.\n"
            "Per cominciare, perché non mi dici quanti giocatori sarete?\n", MIN_PLAYERS, MAX_PLAYERS);
@@ -81,17 +90,52 @@ void creaPartita() {
     printf("Piacere di conoscervi! Adesso genererò randomicamente i ruoli di ognuno di voi.\n");
     assegnaRuoli(giocatori, nGiocatori);
 
-    // caricamento del mazzo dal file "mazzo_bang.txt"
-    printf("\nI ruoli sono stati assegnati! Carico il mazzo di carte dal file di testo...");
-    Mazzo mazzo = caricaMazzo();
+    // caricamento del mazzoPesca dal file "mazzo_bang.txt"
+    printf("\nI ruoli sono stati assegnati! Carico il mazzoPesca di carte dal file di testo...");
+    Mazzo mazzoPesca = caricaMazzo();
 
-    printf("\nMazzo caricato! Adesso distribuirò le carte dalla cima del mazzo di pesca. Vi ricordo "
+    printf("\nMazzo caricato! Adesso distribuirò le carte dalla cima del mazzoPesca di pesca. Vi ricordo "
            "che ad ogni giocatore spetta un numero di carte pari al numero dei suoi punti vita di partenza");
 
-    // distribuzione delle carte dal mazzo ai giocatori
-    distribuisciCartePartenza(&mazzo, giocatori, nGiocatori);
+    // distribuzione delle carte dal mazzoPesca ai giocatori
+    distribuisciCartePartenza(&mazzoPesca, giocatori, nGiocatori);
+
+    // inserimento dei giocatori nelle info della partita
+    partita.giocatori = giocatori;
+    partita.prossimoGiocatore = 0;
+
+    // creazione di un mazzo vuoto che contiene le carte scartate
+    Mazzo mazzoScarti = {MAZZO_SCARTO, 0, NULL};
+
+    // inserimento dei mazzi nelle info della partita
+    partita.mazzoPesca = mazzoPesca;
+    partita.mazzoScarti = mazzoScarti;
+
+    // richiesta all'utente di un nome che identifichi il file di salvataggio
+    printf("Ci siamo quasi! Come ultima cosa, vorrei che mi dicessi un nome per il file di salvataggio\n"
+           "in cui sarà memorizzata questa partita (max. %d caratteri)", SAVEGAME_NAME_LEN);
+    printf("?) ");
+    scanf("%16s", partita.nomeSalvataggio); // TODO: forse si può fare una funzione per generare un format da un numero
 
     printf("\nBene, è tutto pronto! Che la partita abbia inizio, e buona fortuna ai partecipanti!");
+
+    return partita;
+}
+
+/**
+ * Funzione che richiede all'utente le informazioni relative a un salvataggio da caricare,
+ * restituendo poi una struttura "Salvataggio" con le informazioni lette dal file "savegame.bin" relativo.
+ * Se il salvataggio non viene trovato, all'utente viene chiesto nuovamente di indicare un nome.
+ *
+ * @return Il salvataggio caricato dal file.
+ */
+Salvataggio caricaPartita() {
+    char nomeSalvataggio[SAVEGAME_NAME_LEN + 1];
+    printf("\nSe vuoi caricare un salvataggio, inserisci il nome del file in cui è stato scritto:\n"
+           "%c) Esci dal gioco\n"
+           "?) ", PROMPT_EXIT);
+    scanf("%16s", nomeSalvataggio);
+    caricaSalvataggio(nomeSalvataggio);
 }
 
 /**
