@@ -130,12 +130,84 @@ Salvataggio creaPartita() {
  * @return Il salvataggio caricato dal file.
  */
 Salvataggio caricaPartita() {
+    // nome del salvataggio da caricare
     char nomeSalvataggio[SAVEGAME_NAME_LEN + 1];
-    printf("\nSe vuoi caricare un salvataggio, inserisci il nome del file in cui è stato scritto:\n"
-           "%c) Esci dal gioco\n"
-           "?) ", PROMPT_EXIT);
-    scanf("%16s", nomeSalvataggio);
-    caricaSalvataggio(nomeSalvataggio);
+
+    // verifico l'esistenza del file con la lista dei salvataggi
+    #ifdef SAVEGAME_LIST_FILE
+        FILE* savegamesFile = NULL;
+        savegamesFile = fopen(strcat(SAVEGAME_DIR, SAVEGAME_LIST_FILE), "r");
+        // TODO: nel caso spostare queste funzioni in un file 'utils'
+        if(savegamesFile == NULL) {
+            printf("\nImpossibile aprire il file desiderato.");
+            exit(-1);
+        }
+
+        char** salvataggi = NULL;
+        salvataggi = (char**) calloc(1, sizeof(char*));
+        if(salvataggi == NULL) {
+            printf("\nImpossibile allocare dinamicamente memoria."); // TODO: nel caso spostare queste funzioni in un file 'utils'
+            exit(-1);
+        }
+        // lettura del file contenente i salvataggi
+        int read, nSalvataggi = 0;
+        do {
+            salvataggi[nSalvataggi] = (char*) calloc(SAVEGAME_NAME_LEN, sizeof(char));
+            if(salvataggi[nSalvataggi] == NULL) {
+                printf("\nImpossibile allocare dinamicamente memoria."); // TODO: nel caso spostare queste funzioni in un file 'utils'
+                exit(-1);
+            }
+            read = fscanf(savegamesFile, "%s\n", salvataggi[nSalvataggi]);
+            nSalvataggi++;
+        } while(read == 1);
+
+        printf("\nLista dei salvataggi rinvenuta dal file '%s':", SAVEGAME_LIST_FILE);
+        for(int i = 0; i < nSalvataggi; i++) {
+            printf("\n%d) %s", i+1, salvataggi[i]);
+        }
+
+        // prompt per permettere all'utente di scegliere il salvataggio da caricare
+        int toLoad;
+        printf("\nInserisci il numero corrispondente al salvataggio da caricare:\n"
+               "?) ");
+        do {
+            scanf("%d", &toLoad);
+            if(toLoad < 1 || toLoad > nSalvataggi)
+                printf("\nInserisci un numero tra quelli nella lista:\n"
+                       "?)");
+        } while(toLoad < 1 || toLoad > nSalvataggi);
+        strcpy(nomeSalvataggio, salvataggi[toLoad]);
+        free(salvataggi); // libero la memoria non necessaria
+    #else // il file con la lista non è stato definito: il nome deve essere inserito a mano
+        printf("\nSe vuoi caricare un salvataggio, inserisci il nome del file in cui è stato scritto\n"
+               "?) ");
+        do {
+            scanf("%16s", nomeSalvataggio);
+            if(strcmp(nomeSalvataggio, "") == 0)
+                printf("\nInserisci un nome valido\n"
+                       "?) ");
+        } while(strcmp(nomeSalvataggio, "") == 0);
+    #endif
+    // conferma del salvataggio scelto
+    printf("\nHai selezionato il salvataggio '%s'. Desideri caricarlo?\n"
+           "%c/%c", nomeSalvataggio, PROMPT_CONFERMA, PROMPT_RIFIUTA);
+    char conferma;
+
+    do {
+        conferma = getchar();
+        if(conferma != PROMPT_CONFERMA && conferma != PROMPT_RIFIUTA)
+            printf("\nInserisci una delle due opzioni: \n"
+                   "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+    } while(conferma != PROMPT_CONFERMA && conferma != PROMPT_RIFIUTA);
+
+    // se l'utente ha confermato, carico il salvataggio, altrimenti chiudo il gioco
+    if(conferma == PROMPT_CONFERMA) {
+        printf("\nCaricamento del salvataggio '%s'...", nomeSalvataggio);
+        caricaSalvataggio(nomeSalvataggio);
+    } else {
+        printf("\nUscita dal gioco.");
+        chiudiGioco();
+    }
 }
 
 /**
@@ -186,9 +258,6 @@ void assegnaRuoli(Giocatore giocatori[], int nGiocatori) {
            "Fuorilegge: %d\n"
            "Vicesceriffi: %d\n",
            nGiocatori, ruoliGiocatori[SCERIFFO], ruoliGiocatori[RINNEGATO], ruoliGiocatori[FUORILEGGE], ruoliGiocatori[VICESCERIFFO]);
-
-    // inizializzazione del seed per la generazione randomica
-    srand(time(NULL));
 
     // condizione booleana che, se verificata, determina la fine del processo di assegnazione dei ruoli
     bool fineAssegnazione;

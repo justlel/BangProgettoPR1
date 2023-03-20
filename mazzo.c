@@ -48,6 +48,8 @@ Mazzo caricaMazzo() {
             }
         }
     } while(read == 4);
+    fclose(fileMazzo); // chiusura del file
+
     // il puntatore contenente le carte lette viene inserito nella struct "mazzo"
     mazzo.carte = carteMazzo;
 
@@ -66,15 +68,10 @@ Mazzo caricaMazzo() {
  * La randomizzazione dell'ordine segue questa logica: si itera sulle carte del mazzo, e ogni carta
  * viene scambiata con una carta in una posizione randomica all'interno del mazzo, fino ad arrivare
  * all'ultima carta.
- * Nella chiamata della funzione, viene re-inizializzato il seed per la generazione randomica tramite
- * una chiamata alla funzione "srand()".
  *
  * @param mazzo Il mazzo di carte da mischiare.
  */
 void mischiaMazzo(Mazzo* mazzo) {
-    // TODO: nel caso, raccogliere in un altro file
-    srand(time(NULL));
-
     int shuffled; // indice della carta estratta per essere scambiata con quella iterata nel ciclo
     Carta tmpShuffled; // carta che sarà scambiata con quella estratta randomicamente
     for(int i = 0; i < mazzo->numeroCarte; i++) {

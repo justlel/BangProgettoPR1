@@ -26,7 +26,11 @@
  */
 #define PROMPT_CARICA_PARTITA 'C'
 #define PROMPT_NUOVA_PARTITA 'N'
-
+/**
+ * Caratteri che l'utente può inserire in un prompt per confermare/rifiutare una richiesta del programma.
+ */
+#define PROMPT_CONFERMA 'y'
+#define PROMPT_RIFIUTA 'n'
 
 void avvioGioco();
 

@@ -1,12 +1,18 @@
 #include <stdbool.h>
+#include <string.h>
 #include "mazzo.h"
 
 // -------- MACRO GENERALI --------
 /**
- * Se definita, questa macro precisa che i file di salvataggio sono da ricercarsi
- * nella directory fornita.
+ * Macro contenente la directory in cui inserire i file di salvataggio
+ * (lo "/" alla fine del nome è necessario)
  */
-#define SAVEGAME_DIR "savegames"
+#define SAVEGAME_DIR "savegames/"
+/**
+ * Se definita, questa macro indica il nome del file di testo in cui sono contenuti, uno per riga,
+ * i nomi dei file di salvataggio precedentemente creati. La path completa è "SAVEGAME_DIR/SAVEGAME_LIST_FILE",
+ */
+#define SAVEGAME_LIST_FILE "saves.txt"
 /**
  * Lunghezza massima del nome di un file di salvataggio ('\0' escluso).
  */
@@ -17,8 +23,8 @@
  * I campi di questa struttura vengono utilizzati per creare i file di salvataggio.
  */
 typedef struct {
-    char nomeSalvataggio[SAVEGAME_NAME_LEN + 1];
     Giocatore* giocatori;
+    int nGiocatori;
     Mazzo mazzoPesca;
     Mazzo mazzoScarti;
     int prossimoGiocatore;
