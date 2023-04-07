@@ -1,6 +1,5 @@
 #include <stdbool.h>
-#include <string.h>
-#include "mazzo.h"
+#include "giocatore.h"
 
 // -------- MACRO GENERALI --------
 /**
@@ -28,6 +27,8 @@ typedef struct {
     Mazzo mazzoPesca;
     Mazzo mazzoScarti;
     int prossimoGiocatore;
+    char nomeSalvataggio[SAVEGAME_NAME_LEN + 1];
 } Salvataggio;
 
-Salvataggio caricaSalvataggio(char nomeSalvataggio[]);
+Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]);
+void scriviSalvataggio(Salvataggio salvataggio);

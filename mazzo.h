@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "giocatore.h"
+#include "carta.h"
 
 /**
  * Enumerazione contenente le varie tipologie che possono essere assegnate a un mazzo.
@@ -23,7 +23,5 @@ typedef struct {
 Mazzo caricaMazzo();
 
 void mischiaMazzo(Mazzo* mazzo);
-
-void distribuisciCartePartenza(Mazzo* mazzo, Giocatore* giocatori, int nGiocatori);
 
 void scartaCimaMazzo(Mazzo* mazzo, int daScartare);

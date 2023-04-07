@@ -1,8 +1,24 @@
-
 /**
  * Intero contenente la lunghezza massima del nome di una carta ('\0' escluso)
  */
 #define NOME_CARTA_LEN 14
+/**
+ * Intero contenente la lunghezza massima della tipologia di una carta ('\0' escluso)
+ */
+#define TIPOLOGIA_CARTA_LEN 18
+/**
+ * Intero contenente la lunghezza massima del seme di una carta ('\0' escluso)
+ */
+#define SEME_CARTA_LEN 6
+
+/**
+ * Interi contenenti le gittate di tutte le armi
+ */
+#define GITTATA_CARABINA 4
+#define GITTATA_REMINGTON 3
+#define GITTATA_SCHOFIELD 2
+#define GITTATA_WINCHESTER 5
+#define GITTATA_VOLCANIC 1
 
 /**
  * Enumerazione contenente i tipi che possono essere assegnati ad una carta.
@@ -28,3 +44,6 @@ typedef struct {
     int numeroCarta;
     semiCarta semeCarta;
 } Carta;
+
+void prendiTipologiaCarta(tipologieCarta tipologiaCarta, char[TIPOLOGIA_CARTA_LEN + 1]);
+void prendiSemeCarta(semiCarta semeCarta, char[SEME_CARTA_LEN + 1]);

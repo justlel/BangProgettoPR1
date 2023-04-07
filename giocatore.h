@@ -1,4 +1,12 @@
-#include "carta.h"
+#include "mazzo.h"
+#include "string.h"
+#include <stdbool.h>
+
+/**
+ * Caratteri che l'utente può inserire in un prompt per confermare/rifiutare una richiesta del programma.
+ */
+#define PROMPT_CONFERMA 'y'
+#define PROMPT_RIFIUTA 'n'
 
 /**
  * Intero contenente la lunghezza massima del nome di un giocatore ('\0' escluso)
@@ -17,6 +25,11 @@
  */
 #define PUNTI_VITA_SCERIFFO 5
 #define PUNTI_VITA_GENERICO 4
+
+/**
+ * Lunghezza massima del nome di un ruolo per un giocatore ('\0' escluso)
+ */
+#define NOME_RUOLO_LEN_MAX 12
 
 /**
  * Enumerazione contenente i vari ruoli che un giocatore
@@ -39,7 +52,17 @@ typedef struct {
     char nomeUtente[NOME_UTENTE_LEN + 1];
     Ruoli ruoloAssegnato;
     int puntiVita;
-    Carta* carteMano;
-    Carta* carteGioco;
+    Mazzo carteMano;
+    Mazzo carteGioco;
     int gittata;
 } Giocatore;
+
+void prendiNomeRuolo(Ruoli ruoli, char nomeRuolo[NOME_RUOLO_LEN_MAX + 1]);
+void mostraCarteInGiocoGiocatore(Giocatore giocatore);
+int calcoloDistanza(Giocatore giocatori[], int posizioneGiocatore1, int posizioneGiocatore2);
+bool possiedeCartaInGioco(Giocatore giocatore, char nomeCarta[NOME_CARTA_LEN + 1]);
+void mostraDistanze(int nGiocatori, int indiceGiocatore, Giocatore giocatori[]);
+void mostraCarteInGiocoAltri(int nGiocatori, Giocatore giocatori[], Giocatore giocatore);
+void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, Carta carta);
+void rimuoviPuntoVita(Giocatore* giocatore);  // TODO: Da implementare, con la logica della morte
+void pescaCarte(Giocatore* giocatore, int nCarte); // TODO: Da implementare, con la logica che un giocatore può avere solo tot carte

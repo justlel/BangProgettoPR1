@@ -31,6 +31,16 @@
  */
 #define PROMPT_CONFERMA 'y'
 #define PROMPT_RIFIUTA 'n'
+/**
+ *
+ */
+#define PROMPT_TURNO_GIOCA_CARTA 1
+#define PROMPT_TURNO_VEDI_CARTE_MANO 2
+#define PROMPT_TURNO_VEDI_CARTE_GIOCO 3
+#define PROMPT_TURNO_VEDI_DISTANZE 4
+#define PROMPT_TURNO_VEDI_CARTE_GIOCO_ALTRI 5
+#define PROMPT_TURNO_PASSA_TURNO 6
+#define PROMPT_TURNO_ESCI 7
 
 void avvioGioco();
 
@@ -40,6 +50,10 @@ Salvataggio creaPartita();
 
 void assegnaRuoli(Giocatore* giocatori, int nGiocatori);
 
+// TODO: spostarlo
+void distribuisciCartePartenza(Mazzo* mazzo, Giocatore* giocatori, int nGiocatori);
+
 void avviaPartita(Salvataggio partita);
+bool partitaTerminata(Salvataggio partita);
 
 void chiudiGioco();

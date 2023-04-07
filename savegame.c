@@ -7,7 +7,7 @@
  * @param nomeSalvataggio Il nome del file in cui è contenuto il salvataggio.
  * @return Una struttura contenente il salvataggio caricato.
  */
-Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN]) {
+Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
     // struct salvataggio e file da aprire per leggere i suoi campi
     Salvataggio salvataggio;
     FILE* salvataggioFile = NULL;
@@ -17,6 +17,9 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN]) {
         printf("\nImpossibile aprire il file di salvataggio."); // TODO: nel caso spostare queste funzioni in un file 'utils'
         exit(-1);
     }
+
+    // inserimento nel salvataggio del nome del file
+    strcpy(salvataggio.nomeSalvataggio, nomeSalvataggio);
 
     // lettura del file di salvataggio
     int read, readPlayer, readMano, readGioco;
@@ -56,8 +59,10 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN]) {
         printf("\nErrore durante la lettura del file di salvataggio '%s': non è stato fornito il mazzo di scarti.", nomeSalvataggio);
         exit(-1);
     }
-
     // restituisci la struct del salvataggio letto
     return salvataggio;
 }
 
+void scriviSalvataggio(Salvataggio salvataggio, char nomeSalvataggio[SAVEGAME_NAME_LEN]) {
+
+}

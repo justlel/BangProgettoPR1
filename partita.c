@@ -81,6 +81,7 @@ Salvataggio creaPartita() {
     printf("Perfetto, dimmi un po' di più sui partecipanti!\n"
            "Cominciamo dai loro nomi: inserisci il nome di ogni giocatore, tenendo a mente che\n"
            "non possono contenere spazi ed hanno una lunghezza massima di %d caratteri.", NOME_UTENTE_LEN);
+    // TODO: Fare una verifica che impedisca di mettere due nomi uguali
     for(int i = 0; i < nGiocatori; i++) {
         printf("\nGiocatore %d: ", i+1);
         scanf("%49s", giocatori[i].nomeUtente);
@@ -102,7 +103,10 @@ Salvataggio creaPartita() {
 
     // inserimento dei giocatori nelle info della partita
     partita.giocatori = giocatori;
+    // determinazione del primo giocatore che inizia, che è sempre lo sceriffo
     partita.prossimoGiocatore = 0;
+    while(giocatori[partita.prossimoGiocatore].ruoloAssegnato != SCERIFFO && partita.prossimoGiocatore < nGiocatori)
+        partita.prossimoGiocatore++;
 
     // creazione di un mazzo vuoto che contiene le carte scartate
     Mazzo mazzoScarti = {MAZZO_SCARTO, 0, NULL};
@@ -117,9 +121,78 @@ Salvataggio creaPartita() {
     printf("?) ");
     scanf("%16s", partita.nomeSalvataggio); // TODO: forse si può fare una funzione per generare un format da un numero
 
+    // scrittura del nuovo salvataggio
+    scriviSalvataggio(partita);
+
     printf("\nBene, è tutto pronto! Che la partita abbia inizio, e buona fortuna ai partecipanti!");
 
     return partita;
+}
+
+void avviaPartita(Salvataggio partita) {
+    bool ripetizioneCiclo, ripetiScelta = true;
+    int promptTurnoScelta;
+    char ruoloGiocatore[NOME_RUOLO_LEN_MAX + 1];
+    char tmpChoice;
+
+    while(!partitaTerminata(partita)) {
+        printf("------ TURNO n° %d ------", partita.prossimoGiocatore + 1);
+        prendiNomeRuolo(partita.giocatori[partita.prossimoGiocatore].ruoloAssegnato, ruoloGiocatore);
+        printf("\n%s, tocca a te giocare! Il tuo ruolo è '%s'", partita.giocatori[partita.prossimoGiocatore].nomeUtente, ruoloGiocatore);
+        do {
+            printf("\nScegli una delle seguenti azioni:\n"
+                   "%d) Gioca una delle tue carte\n"
+                   "%d) Vedi le tue carte in gioco\n"
+                   "%d) Controlla la tua distanza dagli altri giocatori\n"
+                   "%d) Vedi le carte in gioco degli altri giocatori\n"
+                   "%d) Passa il turno\n"
+                   "%d) Chiudi il gioco\n"
+                   "?) ",
+                   PROMPT_TURNO_GIOCA_CARTA, PROMPT_TURNO_VEDI_CARTE_GIOCO, PROMPT_TURNO_VEDI_DISTANZE,
+                   PROMPT_TURNO_VEDI_CARTE_GIOCO_ALTRI, PROMPT_TURNO_PASSA_TURNO, PROMPT_TURNO_ESCI);
+            do {
+                scanf("%d", &promptTurnoScelta);
+                ripetizioneCiclo = promptTurnoScelta != PROMPT_TURNO_GIOCA_CARTA && promptTurnoScelta != PROMPT_TURNO_VEDI_CARTE_GIOCO &&
+                                   promptTurnoScelta != PROMPT_TURNO_VEDI_DISTANZE && promptTurnoScelta != PROMPT_TURNO_VEDI_CARTE_GIOCO_ALTRI &&
+                                   promptTurnoScelta != PROMPT_TURNO_PASSA_TURNO && promptTurnoScelta != PROMPT_TURNO_ESCI;
+                if(ripetizioneCiclo)
+                    printf("\nInserisci una delle scelte mostrate!\n"
+                           "?) ");
+            } while(ripetizioneCiclo);
+            switch (promptTurnoScelta) {
+                case PROMPT_TURNO_GIOCA_CARTA:
+                    break;
+                case PROMPT_TURNO_VEDI_CARTE_GIOCO:
+                    mostraCarteInGiocoGiocatore(partita.giocatori[partita.prossimoGiocatore]);
+                    break;
+                case PROMPT_TURNO_VEDI_DISTANZE:
+                    mostraDistanze(partita.nGiocatori, partita.prossimoGiocatore, partita.giocatori);
+                    break;
+                case PROMPT_TURNO_VEDI_CARTE_GIOCO_ALTRI:
+                    mostraCarteInGiocoAltri(partita.nGiocatori, partita.giocatori, partita.giocatori[partita.prossimoGiocatore]);
+                    break;
+                case PROMPT_TURNO_PASSA_TURNO:
+                    printf("\nHai deciso di passare il turno! Sei sicuro?\n");
+                    printf("\n%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                    tmpChoice = getchar();
+                    ripetiScelta = tmpChoice == PROMPT_RIFIUTA;
+                    break;
+                case PROMPT_TURNO_ESCI:
+                    printf("\nSei sicuro di voler uscire?\n");
+                    printf("\n%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                    tmpChoice = getchar();
+                    if(tmpChoice == PROMPT_CONFERMA)
+                        chiudiGioco();
+            }
+            chiudiGioco();
+        } while(ripetiScelta); // se in una delle sue azioni il giocatore ha scelto "annulla", allora ripeti il ciclo di scelta
+        partita.prossimoGiocatore = (partita.prossimoGiocatore + 1) % partita.nGiocatori;
+    }
+}
+
+
+bool partitaTerminata(Salvataggio partita) {
+
 }
 
 /**
@@ -304,16 +377,16 @@ void distribuisciCartePartenza(Mazzo* mazzo, Giocatore* giocatori, int nGiocator
     // iterazione sui giocatori
     for(int i = 0; i < nGiocatori; i++) {
         // allocazione dinamica del campo contenente le carte di ogni giocatore
-        giocatori[i].carteMano = (Carta*) calloc(giocatori->puntiVita, sizeof(Carta));
+        giocatori[i].carteMano.carte = (Carta*) calloc(giocatori->puntiVita, sizeof(Carta));
         // TODO: nel caso, raccogliere in un altro file
         // verifica dell'allocazione dinamica
-        if(giocatori[i].carteMano == NULL) {
+        if(giocatori[i].carteMano.carte == NULL) {
             printf("Errore: impossibile allocare dinamicamente il mazzo di carte del giocatore. Arresto.");
             exit(-1);
         }
         // a ogni giocatore vengono assegnate le prime carte del mazzo, per un numero totale pari ai suoi punti vita
         for(int j = 0; j < giocatori[i].puntiVita; j++) {
-            giocatori[i].carteMano[j] = mazzo->carte[j];
+            giocatori[i].carteMano.carte[j] = mazzo->carte[j];
         }
         // le carte assegnate al giocatore vengono scartate dalla cima del mazzo
         scartaCimaMazzo(mazzo, giocatori[i].puntiVita);
