@@ -24,4 +24,4 @@ Mazzo caricaMazzo();
 
 void mischiaMazzo(Mazzo* mazzo);
 
-void scartaCimaMazzo(Mazzo* mazzo, int daScartare);
+Carta* scartaCimaMazzo(Mazzo* mazzo, int daScartare);

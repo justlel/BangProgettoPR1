@@ -63,6 +63,8 @@ int calcoloDistanza(Giocatore giocatori[], int posizioneGiocatore1, int posizion
 bool possiedeCartaInGioco(Giocatore giocatore, char nomeCarta[NOME_CARTA_LEN + 1]);
 void mostraDistanze(int nGiocatori, int indiceGiocatore, Giocatore giocatori[]);
 void mostraCarteInGiocoAltri(int nGiocatori, Giocatore giocatori[], Giocatore giocatore);
-void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, Carta carta);
+void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, Carta carta, Mazzo* mazzoCarte);
 void rimuoviPuntoVita(Giocatore* giocatore);  // TODO: Da implementare, con la logica della morte
-void pescaCarte(Giocatore* giocatore, int nCarte); // TODO: Da implementare, con la logica che un giocatore può avere solo tot carte
+void pescaCarte(Mazzo* mazzoCarte, Giocatore* giocatore, int nCarte); // TODO: Da implementare, con la logica che un giocatore può avere solo tot carte
+void scartaCarta(Giocatore* giocatore);
+Carta prendiArmaGiocatore(Giocatore giocatore);

@@ -384,14 +384,8 @@ void distribuisciCartePartenza(Mazzo* mazzo, Giocatore* giocatori, int nGiocator
             printf("Errore: impossibile allocare dinamicamente il mazzo di carte del giocatore. Arresto.");
             exit(-1);
         }
-        // a ogni giocatore vengono assegnate le prime carte del mazzo, per un numero totale pari ai suoi punti vita
-        for(int j = 0; j < giocatori[i].puntiVita; j++) {
-            giocatori[i].carteMano.carte[j] = mazzo->carte[j];
-        }
-        // le carte assegnate al giocatore vengono scartate dalla cima del mazzo
-        scartaCimaMazzo(mazzo, giocatori[i].puntiVita);
-        // e si diminuisce quindi anche il campo del mazzo che contiene il numero di carte
-        mazzo->numeroCarte -= giocatori[i].puntiVita;
+        // a ogni giocatore vengono assegnate le carte dalla cima del mazzo, per un numero totale pari ai suoi punti vita
+        giocatori[i].carteMano.carte = scartaCimaMazzo(mazzo, giocatori[i].puntiVita); // TODO: da testare
     }
 }
 

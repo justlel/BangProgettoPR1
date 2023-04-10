@@ -85,11 +85,40 @@ void mischiaMazzo(Mazzo* mazzo) {
     }
 }
 
-void scartaCimaMazzo(Mazzo* mazzo, int daScartare) {
+/**
+ * Funzione che scarta un numero dato di carte dalla cima di un mazzo.
+ * Restituisce le carte che sono state scartate
+ *
+ * @param mazzo Il mazzo da cui scartare la carta
+ * @param daScartare Il numero di carte da scartare
+ * @return Le carte scartate dalla cima del mazzo
+ */
+Carta* scartaCimaMazzo(Mazzo* mazzo, int daScartare) {
+    // TODO: cosa fare se finiscono le carte del mazzo?
+    int i;
+    Carta* carteScartate = NULL;
+
+    // creo un array che contiene le carte che saranno scartate dal mazzo
+    carteScartate = (Carta*) calloc(daScartare, sizeof(Carta));
+    // TODO: nel caso, raccogliere in un altro file
+    if(carteScartate == NULL) {
+        printf("Errore: impossibile allocare dinamicamente il mazzo di carte scartato. Arresto.");
+        exit(-1);
+    }
+    for(i = 0; i < daScartare; i++) {
+        carteScartate[i] = mazzo->carte[mazzo->numeroCarte - 1 - i];
+    }
+
+    // scarto dal mazzo le carte
     mazzo->carte = (Carta*) realloc(mazzo->carte, (mazzo->numeroCarte - daScartare) * sizeof(Carta));
     // TODO: nel caso, raccogliere in un altro file
     if(mazzo->carte == NULL) {
         printf("Errore: impossibile allocare dinamicamente il mazzo di carte scartato. Arresto.");
         exit(-1);
     }
+    // diminuisco il numero di carte presenti nel mazzo
+    mazzo->carte -= daScartare;
+
+    // restituisco le carte scartate
+    return carteScartate;
 }
