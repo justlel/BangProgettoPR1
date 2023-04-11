@@ -110,7 +110,7 @@ void mostraCarteInGiocoAltri(int nGiocatori, Giocatore giocatori[], Giocatore gi
 // TODO: Aggiungere documentazione
 void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, Carta carta, Mazzo* mazzoCarte) {
     int i;
-    Giocatore giocatore = giocatori[posizioneGiocatore];
+    Giocatore* giocatore = &giocatori[posizioneGiocatore];
     bool confermaCarta;
     char confermaAzione;
 
@@ -132,7 +132,7 @@ void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, C
             // calcolo della gittata
             printf("\nAl momento, la tua gittata totale è data da questi fattori:");
 
-            armaInUso = prendiArmaGiocatore(giocatore);
+            armaInUso = prendiArmaGiocatore(*giocatore);
             if (strcmp(armaInUso.nomeCarta, "Carabina") == 0) {
                 printf("\nArma: CARABINA (+%d gittata)", GITTATA_CARABINA);
                 gittata += GITTATA_CARABINA;
@@ -153,7 +153,7 @@ void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, C
             // popolo l'array giocatoriRaggiungibili con le posizioni di ogni giocatore raggiungibile, così da non dover effettuare troppe volte il calcolo
             printf("\nConsiderate le carte a disposizione, questi sono i giocatori a cui puoi infliggere danno:");
             for(i = 0; i < nGiocatori; i++) {
-                if(strcmp(giocatori[i].nomeUtente, giocatore.nomeUtente) == 0 || giocatori[i].puntiVita == 0)
+                if(strcmp(giocatori[i].nomeUtente, giocatore->nomeUtente) == 0 || giocatori[i].puntiVita == 0)
                     continue;
                 distanza = calcoloDistanza(giocatori, posizioneGiocatore, i);
                 if(distanza <= gittata) {
@@ -194,22 +194,22 @@ void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, C
                 }
             } while(!confermaCarta);
             // rimozione del punto vita e fine della funzione
-            printf("\n%s ha sparato a %s, che perde quindi un punto vita!", giocatore.nomeUtente, giocatori[destinazioneSparo - 1].nomeUtente);
-            rimuoviPuntoVita(&giocatori[destinazioneSparo - 1]);
+            printf("\n%s ha sparato a %s, che perde quindi un punto vita!", giocatore->nomeUtente, giocatori[destinazioneSparo - 1].nomeUtente);
+            rimuoviPuntiVita(&giocatori[destinazioneSparo - 1], 1);
             free(giocatoriRaggiungibili);
             return;
         } else if(strcmp(carta.nomeCarta, "Birra") == 0) {
-            if((giocatore.ruoloAssegnato == SCERIFFO && giocatore.puntiVita == PUNTI_VITA_SCERIFFO) ||
-               (giocatore.ruoloAssegnato != SCERIFFO && giocatore.puntiVita == PUNTI_VITA_GENERICO)
+            if((giocatore->ruoloAssegnato == SCERIFFO && giocatore->puntiVita == PUNTI_VITA_SCERIFFO) ||
+               (giocatore->ruoloAssegnato != SCERIFFO && giocatore->puntiVita == PUNTI_VITA_GENERICO)
                ) {
                 printf("\nHai già il massimo della vita!");
             } else {
-                printf("\n%s ha utilizzato una birra e guadagna un punto vita!", giocatore.nomeUtente);
+                printf("\n%s ha utilizzato una birra e guadagna un punto vita!", giocatore->nomeUtente);
                 giocatori[posizioneGiocatore].puntiVita++;
             }
             return;
         } else if(strcmp(carta.nomeCarta, "Diligenza") == 0) {
-            printf("\n%s pesca 2 carte!", giocatore.nomeUtente);
+            printf("\n%s pesca 2 carte!", giocatore->nomeUtente);
             pescaCarte(mazzoCarte, &giocatori[posizioneGiocatore], 2);
         } else if(strcmp(carta.nomeCarta, "Panico!") == 0) {
 
@@ -221,7 +221,7 @@ void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, C
             do {
                 printf("\nScegli il giocatore a cui far scartare una carta!");
                 for(j = 0; j < nGiocatori; j++) {
-                    if(strcmp(giocatori[j].nomeUtente, giocatore.nomeUtente) == 0 || giocatori[j].puntiVita == 0)
+                    if(strcmp(giocatori[j].nomeUtente, giocatore->nomeUtente) == 0 || giocatori[j].puntiVita == 0)
                         continue;
                     printf("*) %s", giocatori[j].nomeUtente);
                 }
@@ -229,7 +229,7 @@ void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, C
                 printf("?) ");
                 do {
                     scanf(" %49s", giocatoreScelto);
-                    if(strcmp(giocatoreScelto, giocatore.nomeUtente) != 0) {
+                    if(strcmp(giocatoreScelto, giocatore->nomeUtente) != 0) {
                         for (j = 0; ripetizioneCiclo || j < nGiocatori; j++) {
                             if (strcmp(giocatori[j].nomeUtente, giocatoreScelto) == 0) {
                                 indiceGiocatoreScelto = j;
@@ -257,7 +257,7 @@ void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, C
                 }
             } while(!confermaCarta);
 
-            printf("\n%s ha giocato un Cat Balou contro %s, che deve scartare una carta!", giocatore.nomeUtente, giocatoreScelto);
+            printf("\n%s ha giocato un Cat Balou contro %s, che deve scartare una carta!", giocatore->nomeUtente, giocatoreScelto);
             printf("\nPassa lo schermo a %s per permettergli di scegliere quale carta scartare.", giocatoreScelto);
             scartaCarta(&giocatori[indiceGiocatoreScelto]);
         } else if(strcmp(carta.nomeCarta, "Mancato!") == 0) {
@@ -265,10 +265,10 @@ void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, C
         } else if(strcmp(carta.nomeCarta, "Gatling") == 0) {
             int j;
 
-            printf("\n%s ha giocato un Gatling: tutti i giocatori perdono un punto vita!", giocatore.nomeUtente);
+            printf("\n%s ha giocato un Gatling: tutti i giocatori perdono un punto vita!", giocatore->nomeUtente);
             for(j = 0; j < nGiocatori; j++) {
                 if(j != posizioneGiocatore && giocatori[j].puntiVita > 0) {
-                    rimuoviPuntoVita(&giocatori[j]);
+                    rimuoviPuntiVita(&giocatori[j], 1);
                 }
             }
         } else if(strcmp(carta.nomeCarta, "Saloon") == 0) {
@@ -281,19 +281,20 @@ void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, C
                 }
             }
         } else if(strcmp(carta.nomeCarta, "WellsFargo") == 0) {
-            printf("\n%s pesca 3 carte!", giocatore.nomeUtente);
+            printf("\n%s pesca 3 carte!", giocatore->nomeUtente);
             pescaCarte(mazzoCarte, &giocatori[posizioneGiocatore], 3);
         }
     // SECONDA PARTE: carte istantanee speciali
     } else if(carta.tipologiaCarta == ISTANTANEA_SPECIAL) {
         if(strcmp(carta.nomeCarta, "Duello") == 0) {
-            int j, indiceGiocatoreScelto;
+            int j, indiceGiocatoreScelto, turnoDuello = 0, cartaBangDaScartare;
             char giocatoreScelto[NOME_UTENTE_LEN + 1];
-            bool ripetizioneCiclo;
+            bool ripetizioneCiclo, vittoriaSfidante = false, vittoriaSfidato = false;
+            Giocatore* vincitoreDuello;
 
             printf("\nInserisci il nome del giocatore da sfidare a duello!");
             for(j = 0; j < nGiocatori; j++) {
-                if(strcmp(giocatori[j].nomeUtente, giocatore.nomeUtente) == 0 || giocatori[j].puntiVita == 0)
+                if(strcmp(giocatori[j].nomeUtente, giocatore->nomeUtente) == 0 || giocatori[j].puntiVita == 0)
                     continue;
                 printf("*) %s", giocatori[j].nomeUtente);
             }
@@ -302,7 +303,7 @@ void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, C
             do  {
                 do {
                     scanf(" %49s", giocatoreScelto);
-                    if(strcmp(giocatoreScelto, giocatore.nomeUtente) != 0) {
+                    if(strcmp(giocatoreScelto, giocatore->nomeUtente) != 0) {
                         for (j = 0; ripetizioneCiclo || j < nGiocatori; j++) {
                             if (strcmp(giocatori[j].nomeUtente, giocatoreScelto) == 0) {
                                 indiceGiocatoreScelto = j;
@@ -330,7 +331,39 @@ void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, C
                 }
             } while (!confermaCarta);
 
-            printf("\nSi dia inizio al duello tra %s e %s!", giocatore.nomeUtente, giocatori[indiceGiocatoreScelto].nomeUtente);
+            printf("\nSi dia inizio al duello tra %s e %s!", giocatore->nomeUtente, giocatori[indiceGiocatoreScelto].nomeUtente);
+            printf("\nEstrarrò una carta 'Bang!' una volta a testa per ciascun giocatore. Il primo a finirle perderà un punto vita!");
+
+            do {
+                // è il turno del giocatore sfidato
+                if(turnoDuello % 2 == 0) {
+                    cartaBangDaScartare = cercaCartaMazzoPerNome(giocatori[indiceGiocatoreScelto].carteMano, "Bang!");
+                    vittoriaSfidante = cartaBangDaScartare == -1;
+                    if(vittoriaSfidante) {
+                        printf("\n%s scarta una carta Bang! Ora tocca allo sfidante.", giocatori[indiceGiocatoreScelto].nomeUtente);
+                        rimuoviCartaMazzo(&giocatori[indiceGiocatoreScelto].carteMano,
+                                          giocatori[indiceGiocatoreScelto].carteMano.carte[cartaBangDaScartare]);
+                    }
+                // è il turno dello sfidante
+                } else {
+                    cartaBangDaScartare = cercaCartaMazzoPerNome(giocatore->carteMano, "Bang!");
+                    vittoriaSfidato = cartaBangDaScartare == -1;
+                    if(vittoriaSfidato) {
+                        printf("\n%s scarta una carta Bang! Ora tocca al giocatore sfidato.", giocatore->nomeUtente);
+                        rimuoviCartaMazzo(&giocatori[indiceGiocatoreScelto].carteMano,
+                                          giocatori[indiceGiocatoreScelto].carteMano.carte[cartaBangDaScartare]);
+                    }
+                }
+                turnoDuello++;
+            } while(!vittoriaSfidante && !vittoriaSfidato);
+
+            if(vittoriaSfidante) {
+                vincitoreDuello = giocatore;
+            } else {
+                vincitoreDuello = &giocatori[indiceGiocatoreScelto];
+            }
+            printf("%s ha esaurito le carte Bang!, e pertanto perde il duello!", vincitoreDuello->nomeUtente);
+            rimuoviPuntiVita(vincitoreDuello, 3);
         } else if(strcmp(carta.nomeCarta, "Emporio") == 0) {
 
         } else if(strcmp(carta.nomeCarta, "Indiani") == 0) {
@@ -362,10 +395,11 @@ void pescaCarte(Mazzo* mazzoCarte, Giocatore* giocatore, int nCarte) {
     }
 }
 
+
+
 void scartaCarta(Giocatore* giocatore) {
     int i, cartaScelta;
     bool ripetiCiclo = false;
-    Carta* nuovoMazzoMano = NULL;
 
     printf("\nScegli una carta da scartare:");
     for(i = 0; i < giocatore->carteMano.numeroCarte; i++) {
@@ -375,31 +409,12 @@ void scartaCarta(Giocatore* giocatore) {
         printf("?) ");
         scanf("%d", &cartaScelta);
         if(ripetiCiclo)
-            printf("\nInserisci un numero tra %d e %d!\n");
+            printf("\nInserisci un numero tra %d e %d!\n", 1, giocatore->carteMano.numeroCarte);
         ripetiCiclo = cartaScelta <= 0 || cartaScelta > giocatore->carteMano.numeroCarte;
     } while(ripetiCiclo);
 
-    // creo il nuovo mazzo con la carta scartata
-    giocatore->carteMano.numeroCarte--;
-    nuovoMazzoMano = (Carta*) calloc(giocatore->carteMano.numeroCarte, sizeof(Carta));
-    if(nuovoMazzoMano == NULL) {
-        printf("\nImpossibile allocare dinamicamente memoria."); // TODO: spostare in utils
-        exit(-1);
-    }
-    for(i = 0; i < giocatore->carteMano.numeroCarte; i++) {
-        if(i != cartaScelta - 1)
-            nuovoMazzoMano[i] = giocatore->carteMano.carte[i];
-    }
-    free(giocatore->carteMano.carte);
-    giocatore->carteMano.carte = nuovoMazzoMano; // TODO: Da testare
-}
-
-bool possiedeCartaInGioco(Giocatore giocatore, char nomeCarta[NOME_CARTA_LEN + 1]) {
-    for(int i = 0; i < giocatore.carteGioco.numeroCarte; i++) {
-        if(strcmp(nomeCarta, giocatore.carteGioco.carte[i].nomeCarta) == 0)
-            return true;
-    }
-    return false;
+    // rimuovo la carta dalla mano del giocatore
+    rimuoviCartaMazzo(&giocatore->carteMano, giocatore->carteMano.carte[cartaScelta - 1]);
 }
 
 /**

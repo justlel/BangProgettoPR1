@@ -122,3 +122,44 @@ Carta* scartaCimaMazzo(Mazzo* mazzo, int daScartare) {
     // restituisco le carte scartate
     return carteScartate;
 }
+
+/**
+ * Restituisce l'indice di una carta all'interno di un mazzo dato un nome,
+ * oppure -1 se la carta non viene trovata.
+ *
+ * @param mazzo Il mazzo in cui cercare la carta
+ * @param nomeCarta Il nome della carta da cercare
+ * @return L'indice della carta se viene trovata, -1 altrimenti
+ */
+int cercaCartaMazzoPerNome(Mazzo mazzo, char nomeCarta[NOME_CARTA_LEN + 1]) {
+    int i;
+
+    for(i = 0; i < mazzo.numeroCarte; i++) {
+        if(strcmp(nomeCarta, mazzo.carte[i].nomeCarta) == 0)
+            return i;
+    }
+    return -1;
+}
+
+void rimuoviCartaMazzo(Mazzo* mazzo, Carta carta) {
+    int i;
+    Carta* nuovoMazzo = NULL;
+
+    mazzo->numeroCarte--;
+    nuovoMazzo = (Carta*) calloc(mazzo->numeroCarte, sizeof(Carta));
+    if(nuovoMazzo == NULL) {
+        printf("\nImpossibile allocare dinamicamente memoria."); // TODO: spostare in utils
+        exit(-1);
+    }
+
+    for(i = 0; i < mazzo->numeroCarte; i++) {
+        if(strcmp(mazzo->carte[i].nomeCarta, carta.nomeCarta) == 0 &&
+                mazzo->carte[i].numeroCarta == carta.numeroCarta &&
+                mazzo->carte[i].semeCarta == carta.semeCarta)
+            continue;
+        nuovoMazzo[i] = mazzo->carte[i];
+    }
+
+    free(mazzo->carte);
+    mazzo->carte = nuovoMazzo; // TODO: Da testare
+}

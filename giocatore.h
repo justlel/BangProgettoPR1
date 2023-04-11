@@ -1,6 +1,5 @@
 #include "mazzo.h"
 #include "string.h"
-#include <stdbool.h>
 
 /**
  * Caratteri che l'utente può inserire in un prompt per confermare/rifiutare una richiesta del programma.
@@ -64,7 +63,8 @@ bool possiedeCartaInGioco(Giocatore giocatore, char nomeCarta[NOME_CARTA_LEN + 1
 void mostraDistanze(int nGiocatori, int indiceGiocatore, Giocatore giocatori[]);
 void mostraCarteInGiocoAltri(int nGiocatori, Giocatore giocatori[], Giocatore giocatore);
 void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, Carta carta, Mazzo* mazzoCarte);
-void rimuoviPuntoVita(Giocatore* giocatore);  // TODO: Da implementare, con la logica della morte
+void rimuoviPuntiVita(Giocatore* giocatore, int puntiVita);  // TODO: Da implementare, con la logica della morte
 void pescaCarte(Mazzo* mazzoCarte, Giocatore* giocatore, int nCarte); // TODO: Da implementare, con la logica che un giocatore può avere solo tot carte
 void scartaCarta(Giocatore* giocatore);
+void rimuoviCarta(Giocatore* giocatore, Carta carta);
 Carta prendiArmaGiocatore(Giocatore giocatore);

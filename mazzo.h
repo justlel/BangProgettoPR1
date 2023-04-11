@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdbool.h>
+#include <string.h>
 #include "carta.h"
 
 /**
@@ -25,3 +27,6 @@ Mazzo caricaMazzo();
 void mischiaMazzo(Mazzo* mazzo);
 
 Carta* scartaCimaMazzo(Mazzo* mazzo, int daScartare);
+void rimuoviCartaMazzo(Mazzo* mazzo, Carta carta);
+
+int cercaCartaMazzoPerNome(Mazzo mazzo, char nomeCarta[NOME_CARTA_LEN + 1]);
