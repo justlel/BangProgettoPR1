@@ -163,3 +163,16 @@ void rimuoviCartaMazzo(Mazzo* mazzo, Carta carta) {
     free(mazzo->carte);
     mazzo->carte = nuovoMazzo; // TODO: Da testare
 }
+
+void aggiungiCartaMazzo(Mazzo* mazzo, Carta carta) {
+    // allargamento del mazzo di carte per far spazio alla nuova carta
+    mazzo->numeroCarte++;
+    mazzo->carte = (Carta*) realloc(mazzo->carte, mazzo->numeroCarte);
+    if(mazzo->carte == NULL) {
+        printf("\nErrore: impossibile allocare dinamicamente."); // TODO: 'utils'
+        exit(-1);
+    }
+
+    // aggiunta della nuova carta
+    mazzo->carte[mazzo->numeroCarte - 1] = carta;
+}

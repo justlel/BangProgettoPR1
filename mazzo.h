@@ -28,5 +28,6 @@ void mischiaMazzo(Mazzo* mazzo);
 
 Carta* scartaCimaMazzo(Mazzo* mazzo, int daScartare);
 void rimuoviCartaMazzo(Mazzo* mazzo, Carta carta);
+void aggiungiCartaMazzo(Mazzo* mazzo, Carta carta);
 
 int cercaCartaMazzoPerNome(Mazzo mazzo, char nomeCarta[NOME_CARTA_LEN + 1]);

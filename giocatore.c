@@ -365,9 +365,98 @@ void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, C
             printf("%s ha esaurito le carte Bang!, e pertanto perde il duello!", vincitoreDuello->nomeUtente);
             rimuoviPuntiVita(vincitoreDuello, 3);
         } else if(strcmp(carta.nomeCarta, "Emporio") == 0) {
+            printf("\nLa carta 'Emporio' estrae dal mazzo di pesca un numero di carte pari a quello dei giocatori in vita,"
+                   "per poi permettere ad ogni utente (a partire da chi ha giocato la carta) di pescare una carta da questo mazzo.");
+            int j, k, giocatoriInVita, cartaScelta, nCarteEstratte = 0;
+            Carta* carteEstratte = NULL; // array dinamico contenente le carte estratte dal mazzo di pesca
+            Carta* carteEstratteTmp = NULL; // array utilizzato quando viene rimossa una carta dal mazzo di sopra
 
+            // calcolo dei giocatori in vita
+            for(j = 0; j < nGiocatori; j++) {
+                if(giocatori[j].puntiVita > 0)
+                    giocatoriInVita++;
+            }
+            printf("\nEssendoci %d giocatori in vita, saranno pescate %d carte.", giocatoriInVita, giocatoriInVita);
+
+            // creazione dell'array dinamico contenente tante carte estratte quanti sono i giocatori in vita
+            carteEstratte = (Carta*) calloc(giocatoriInVita, sizeof(Carta));
+            if(carteEstratte == NULL) {
+                printf("\nErrore: impossibile allocare dinamicamente"); // TODO: 'utils'
+                exit(-1);
+            }
+            // e allocazione della memoria sufficiente per l'array in cui inserire temporaneamente le carte che non sono state selezionate
+            // di dimensione giocatoriInVita - 1, dato che si può estrarre solo una carta alla volta per giocatore
+            carteEstratteTmp = (Carta*) calloc(giocatoriInVita - 1, sizeof(Carta));
+            if(carteEstratteTmp == NULL) {
+                printf("\nErrore: impossibile allocare dinamicamente"); // TODO: 'utils'
+                exit(-1);
+            }
+
+            // popolazione dell'array dinamico appena dichiarato
+            carteEstratte = scartaCimaMazzo(mazzoCarte, giocatoriInVita);
+
+            // a partire dal giocatore che ha estratto la carta, chiedo di pescarne una da quelle appena ottenute
+            j = posizioneGiocatore;
+            while(nCarteEstratte < giocatoriInVita) {
+                printf("\n%s, è il tuo turno di pescare!", giocatori[j].nomeUtente);
+                if(giocatori[j].carteMano.numeroCarte == giocatori[j].puntiVita) {
+                    printf("\nMa prima devi scegliere una carta da scartare.");
+                    scartaCarta(&giocatori[j]);
+                }
+
+                printf("\nScegli una carta da pescare:");
+                for(k = 0; k < giocatoriInVita - nCarteEstratte; k++) {
+                    printf("%d) %s", k+1, carteEstratte[k].nomeCarta);
+                }
+                do {
+                    printf("\nInserisci il numero della carta da pescare: \n"
+                           "?) ");
+                    scanf("%d", &cartaScelta);
+                    if(cartaScelta <= 0 || cartaScelta > giocatoriInVita)
+                        printf("\nIl valore inserito non è valido!");
+                } while(cartaScelta <= 0 || cartaScelta > giocatoriInVita);
+                printf("\nBene! Hai scelto di pescare una carta '%s'.", carteEstratte[cartaScelta - 1].nomeCarta);
+
+                // rimozione della carta dal mazzetto pescato e aggiunta alla mano del giocatore
+                for(k = 0; k < giocatoriInVita - nCarteEstratte; k++) {
+                    if(k != cartaScelta - 1)
+                        carteEstratteTmp[k] = carteEstratte[k];
+                }
+                // è stata estratta una carta
+                nCarteEstratte++;
+                // aggiunta della carta estratta al mazzo del giocatore
+                aggiungiCartaMazzo(&giocatori[j].carteMano, carteEstratte[cartaScelta - 1]);
+                // elimino il vecchio mazzetto di carte
+                free(carteEstratte);
+                // e al suo posto uso quello senza la carta che è stata selezionata
+                carteEstratte = carteEstratteTmp;
+                // TODO: Da verificare
+                // creo un nuovo puntatore a un array vuoto per il mazzo temporaneo, perché se utilizzassi
+                // una realloc() starei modificando anche carteEstratte
+                carteEstratteTmp = (Carta*) calloc(giocatoriInVita - nCarteEstratte, sizeof(Carta));
+                // uso il modulo per tornare all'inizio nel caso in cui dovessi aver raggiunto la fine dell'array giocatori
+                j = (j + 1) % nGiocatori;
+            }
+            free(carteEstratte);
+            free(carteEstratteTmp);
+            printf("\nEstrazione terminata!");
         } else if(strcmp(carta.nomeCarta, "Indiani") == 0) {
+            int j, posizioneCartaBang;
 
+            printf("\nAttacco di indiani in arrivo! Ogni giocatore (eccetto chi ha giocato la carta) deve giocare"
+                   "una carta 'Bang!', oppure perdere un punto vita!");
+            for(j = 0; j < nGiocatori; j++) {
+                if(j != posizioneGiocatore && giocatori[j].puntiVita > 0) {
+                    posizioneCartaBang = cercaCartaMazzoPerNome(giocatori[j].carteMano, "Bang!");
+                    if(posizioneCartaBang == -1) {
+                        printf("\n%s non possiede una carta 'Bang!', e perde quindi un punto vita!", giocatori[j].nomeUtente);
+                        rimuoviPuntiVita(&giocatori[j], 1);
+                    } else {
+                        printf("\n%s scarta una carta 'Bang!' ed evita l'attacco degli indiani!", giocatori[j].nomeUtente);
+                        rimuoviCartaMazzo(&giocatori[j].carteMano, giocatori[j].carteMano.carte[posizioneCartaBang]);
+                    }
+                }
+            }
         }
     // TERZA PARTE: armi
     } else if(carta.tipologiaCarta == ARMA) {
@@ -394,8 +483,6 @@ void pescaCarte(Mazzo* mazzoCarte, Giocatore* giocatore, int nCarte) {
         printf("\nHai pescato una carta %s: '%s'! (%d di %s)", tipologiaCartaPescata, cartaPescata.nomeCarta, cartaPescata.numeroCarta, semeCartaPescata);
     }
 }
-
-
 
 void scartaCarta(Giocatore* giocatore) {
     int i, cartaScelta;
