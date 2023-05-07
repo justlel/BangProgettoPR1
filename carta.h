@@ -1,3 +1,6 @@
+#include <string.h>
+
+
 /**
  * Intero contenente la lunghezza massima del nome di una carta ('\0' escluso)
  */
@@ -45,5 +48,5 @@ typedef struct {
     semiCarta semeCarta;
 } Carta;
 
-void prendiTipologiaCarta(tipologieCarta tipologiaCarta, char[TIPOLOGIA_CARTA_LEN + 1]);
-void prendiSemeCarta(semiCarta semeCarta, char[SEME_CARTA_LEN + 1]);
+void prendiTipologiaCarta(tipologieCarta tipologiaCarta, char nomeTipologia[TIPOLOGIA_CARTA_LEN + 1]);
+void prendiSemeCarta(semiCarta semeCarta, char nomeSeme[SEME_CARTA_LEN + 1]);

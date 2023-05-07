@@ -86,41 +86,66 @@ void mischiaMazzo(Mazzo* mazzo) {
 }
 
 /**
- * Funzione che scarta un numero dato di carte dalla cima di un mazzo.
- * Restituisce le carte che sono state scartate
+ * Funzione che pesca un numero dato di carte dalla cima di un mazzoPesca.
+ * Restituisce un puntatore a un array contenente le carte pescate dal mazzo di pesca.
  *
- * @param mazzo Il mazzo da cui scartare la carta
- * @param daScartare Il numero di carte da scartare
- * @return Le carte scartate dalla cima del mazzo
+ * @param mazzoPesca Puntatore al mazzo di pesca, da cui pescare.
+ * @param numeroCarteDaPescare Il numero di carte da pescare.
+ * @return Puntatore all'array contenente le carte pescate, di dimensione 'numeroCarteDaPescare'.
  */
-Carta* scartaCimaMazzo(Mazzo* mazzo, int daScartare) {
-    // TODO: cosa fare se finiscono le carte del mazzo?
+Carta* pescaCimaMazzo(Mazzo* mazzoPesca, int numeroCarteDaPescare) {
+    // TODO: cosa fare se finiscono le carte del mazzoPesca?
     int i;
-    Carta* carteScartate = NULL;
+    Carta* cartePescate = NULL;
 
-    // creo un array che contiene le carte che saranno scartate dal mazzo
-    carteScartate = (Carta*) calloc(daScartare, sizeof(Carta));
-    // TODO: nel caso, raccogliere in un altro file
-    if(carteScartate == NULL) {
-        printf("Errore: impossibile allocare dinamicamente il mazzo di carte scartato. Arresto.");
-        exit(-1);
-    }
-    for(i = 0; i < daScartare; i++) {
-        carteScartate[i] = mazzo->carte[mazzo->numeroCarte - 1 - i];
+    // alloco dinamicamente un array che contiene le carte che saranno pescate dal 'mazzoPesca'
+    cartePescate = (Carta*) calloc(numeroCarteDaPescare, sizeof(Carta));
+    if(cartePescate == NULL) {
+        printf("Errore: impossibile allocare dinamicamente il mazzoPesca di carte scartato. Arresto.");
+        exit(-1); // TODO: utils
     }
 
-    // scarto dal mazzo le carte
-    mazzo->carte = (Carta*) realloc(mazzo->carte, (mazzo->numeroCarte - daScartare) * sizeof(Carta));
-    // TODO: nel caso, raccogliere in un altro file
-    if(mazzo->carte == NULL) {
-        printf("Errore: impossibile allocare dinamicamente il mazzo di carte scartato. Arresto.");
-        exit(-1);
+    // inserisco le carte pescate in un array
+    for(i = mazzoPesca->numeroCarte - 1; i >= 0; i--) {
+        cartePescate[i] = mazzoPesca->carte[i];
     }
-    // diminuisco il numero di carte presenti nel mazzo
-    mazzo->carte -= daScartare;
 
-    // restituisco le carte scartate
-    return carteScartate;
+    // riduco il 'mazzoPesca' togliendo le carte pescate
+    mazzoPesca->carte = (Carta*) realloc(mazzoPesca->carte, (mazzoPesca->numeroCarte - numeroCarteDaPescare) * sizeof(Carta));
+    if(mazzoPesca->carte == NULL) {
+        printf("Errore: impossibile allocare dinamicamente il mazzoPesca di carte scartato. Arresto.");
+        exit(-1); // TODO: utils
+    }
+    // diminuisco il numero di carte presenti nel 'mazzoPesca'
+    mazzoPesca->carte -= numeroCarteDaPescare;
+
+    // restituisco le carte pescate
+    return cartePescate;
+}
+
+/**
+ * Funzione che estrae un numero fornito di carte.
+ * Con il termine 'estrarre' si intende l'azione che prevede la pesca dal mazzo di pesca, e poi lo scarto immediato.
+ * Questo significa che le carte estratte vengono restituite dalla funzione, ma non sono utilizzabili perché sono state
+ * spostate nel mazzo degli scarti.
+ *
+ * @param mazzoPesca Puntatore al mazzo di pesca, da cui pescare.
+ * @param mazzoScarti Puntatore al mazzo degli scarti, in cui inserire la carta scartata.
+ * @param numeroCarteDaEstrarre Il numero di carte da estrarre.
+ * @return Un puntatore all'array contenente le carte estratte (NON possono essere date a un giocatore)
+ */
+Carta *estraiCarte(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int numeroCarteDaEstrarre) {
+    int i;
+    // pesco le carte dalla cima del mazzo
+    Carta* cartePescate = pescaCimaMazzo(mazzoPesca, numeroCarteDaEstrarre);
+
+    // aggiungo automaticamente al mazzo di scarti
+    for(i = 0; i < numeroCarteDaEstrarre; i++) {
+        aggiungiCartaMazzo(mazzoScarti, cartePescate[i]);
+    }
+
+    // restituisco le carte estratte
+    return cartePescate;
 }
 
 /**
@@ -175,4 +200,38 @@ void aggiungiCartaMazzo(Mazzo* mazzo, Carta carta) {
 
     // aggiunta della nuova carta
     mazzo->carte[mazzo->numeroCarte - 1] = carta;
+}
+
+/**
+ * Subroutine che mostra a schermo le informazioni di una carta.
+ *
+ * @param carta La carta da mostrare.
+ */
+void mostraCarta(Carta carta) {
+    // variabili di appoggio, contenenti il nome della tipologia e del seme della carta
+    char tipologiaCarta[TIPOLOGIA_CARTA_LEN + 1], semeCarta[SEME_CARTA_LEN + 1];
+
+    prendiTipologiaCarta(carta.tipologiaCarta, tipologiaCarta);
+    prendiSemeCarta(carta.semeCarta, semeCarta);
+
+    printf("\nNome: %s\n"
+           "Tipologia: %s\n"
+           "Numero della carta: %d\n"
+           "Seme della carta: %s",
+           carta.nomeCarta, tipologiaCarta, carta.numeroCarta, semeCarta);
+}
+
+/**
+ * Subroutine che mostra le carte presenti all'interno di un mazzo.
+ *
+ * @param mazzo Il mazzo con le carte da stampare a schermo.
+ */
+void mostraCarteMazzo(Mazzo mazzo) {
+    int i;
+
+    if(mazzo.numeroCarte == 0)
+        printf("\nNessuna carta presente!");
+    for(i = 0; i < mazzo.numeroCarte; i++) {
+        mostraCarta(mazzo.carte[i]);
+    }
 }

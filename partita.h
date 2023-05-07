@@ -53,6 +53,8 @@ void assegnaRuoli(Giocatore* giocatori, int nGiocatori);
 // TODO: spostarlo
 void distribuisciCartePartenza(Mazzo* mazzo, Giocatore* giocatori, int nGiocatori);
 
+bool verificaCarteInGioco(Salvataggio partita);
+
 void avviaPartita(Salvataggio partita);
 bool partitaTerminata(Salvataggio partita);
 

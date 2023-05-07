@@ -26,7 +26,12 @@ Mazzo caricaMazzo();
 
 void mischiaMazzo(Mazzo* mazzo);
 
-Carta* scartaCimaMazzo(Mazzo* mazzo, int daScartare);
+void mostraCarta(Carta carta);
+void mostraCarteMazzo(Mazzo mazzo);
+
+Carta* pescaCimaMazzo(Mazzo* mazzoPesca, int numeroCarteDaPescare);
+Carta *estraiCarte(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int numeroCarteDaEstrarre);
+
 void rimuoviCartaMazzo(Mazzo* mazzo, Carta carta);
 void aggiungiCartaMazzo(Mazzo* mazzo, Carta carta);
 

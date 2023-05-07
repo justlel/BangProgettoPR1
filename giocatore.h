@@ -7,6 +7,9 @@
 #define PROMPT_CONFERMA 'y'
 #define PROMPT_RIFIUTA 'n'
 
+#define PROMPT_VERO 'S'
+#define PROMPT_FALSO 'N'
+
 /**
  * Intero contenente la lunghezza massima del nome di un giocatore ('\0' escluso)
  */
@@ -56,15 +59,25 @@ typedef struct {
     int gittata;
 } Giocatore;
 
-void prendiNomeRuolo(Ruoli ruoli, char nomeRuolo[NOME_RUOLO_LEN_MAX + 1]);
-void mostraCarteInGiocoGiocatore(Giocatore giocatore);
-int calcoloDistanza(Giocatore giocatori[], int posizioneGiocatore1, int posizioneGiocatore2);
+
+// FUNZIONI SULLE DISTANZE TRA GIOCATORI
+int* calcolaDistanzeGiocatori(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore);
+void mostraDistanze(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore);
+
+// FUNZIONI SULLE CARTE DEI GIOCATORI
+// SUBROUTINE VISIVE
+void mostraCarteInGiocoAltri(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore);
+// FUNZIONI
 bool possiedeCartaInGioco(Giocatore giocatore, char nomeCarta[NOME_CARTA_LEN + 1]);
-void mostraDistanze(int nGiocatori, int indiceGiocatore, Giocatore giocatori[]);
-void mostraCarteInGiocoAltri(int nGiocatori, Giocatore giocatori[], Giocatore giocatore);
-void giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, Carta carta, Mazzo* mazzoCarte);
-void rimuoviPuntiVita(Giocatore* giocatore, int puntiVita);  // TODO: Da implementare, con la logica della morte
-void pescaCarte(Mazzo* mazzoCarte, Giocatore* giocatore, int nCarte); // TODO: Da implementare, con la logica che un giocatore può avere solo tot carte
-void scartaCarta(Giocatore* giocatore);
-void rimuoviCarta(Giocatore* giocatore, Carta carta);
+bool giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, Carta carta, Mazzo* mazzoPesca);
+
+void pescaCarte(Mazzo* mazzoPesca, Giocatore* giocatore, int nCarte); // TODO: Da implementare, con la logica che un giocatore può avere solo tot carte
+void scartaCarta(Mazzo* mazzoMano, Mazzo* mazzoScarti);
+Carta *estraiCarte(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nCarte);
+
+void aggiungiCartaInGioco(Giocatore* giocatoreCarta, Giocatore* giocatoreBersaglio, Carta carta);
 Carta prendiArmaGiocatore(Giocatore giocatore);
+
+// FUNZIONI SUI GIOCATORI
+void rimuoviPuntiVita(Giocatore* giocatore, int puntiVita);  // TODO: Da implementare, con la logica della morte
+void prendiNomeRuolo(Ruoli ruoli, char nomeRuolo[NOME_RUOLO_LEN_MAX + 1]);
