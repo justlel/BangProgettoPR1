@@ -135,11 +135,14 @@ int* calcolaDistanzeGiocatori(int nGiocatori, Giocatore giocatori[nGiocatori], i
  * @param nGiocatori Il numero di giocatori in partita.
  * @param posizioneGiocatore L'indice del giocatore da cui calcolare le distanze.
  * @param giocatori I giocatori in partita.
+ * @param distanze Puntatore all'array contenente le distanze dal giocatore considerato. Se NULL, le distanze vengono calcolate.
  */
-void mostraDistanze(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore) {
+void mostraDistanze(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, int* distanze) {
     int i;
-    // calcolo le distanze con la funzione 'calcolaDistanzeGiocatori'
-    int* distanze = calcolaDistanzeGiocatori(nGiocatori, giocatori, posizioneGiocatore);
+
+    // se non sono state fornite, calcolo le distanze con la funzione 'calcolaDistanzeGiocatori'
+    if(distanze == NULL)
+        distanze = calcolaDistanzeGiocatori(nGiocatori, giocatori, posizioneGiocatore);
 
     // itero sulle distanze calcolate
     for(i = 0; i < nGiocatori; i++) {
@@ -173,33 +176,28 @@ void mostraCarteInGiocoAltri(int nGiocatori, Giocatore giocatori[nGiocatori], in
 }
 
 // TODO: Aggiungere documentazione
-bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore, Carta carta, Mazzo* mazzoPesca) {
+bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore, Carta carta, Mazzo* mazzoPesca, Mazzo* mazzoScarti) {
+    // variabile di appoggio per i cicli interni
     int i;
-    Giocatore *giocatore = &giocatori[posizioneGiocatore];
+    // puntatore al giocatore che sta giocando la carta al momento
+    Giocatore* giocatore = &giocatori[posizioneGiocatore];
+    // variabili di appoggio utilizzate nei cicli do-while interni per chiedere conferma delle scelte
     bool confermaCarta;
     char confermaAzione;
 
     // PRIMA PARTE: carte istantanee
     if (carta.tipologiaCarta == ISTANTANEA) {
         if (strcmp(carta.nomeCarta, "Bang!") == 0) {
-            int j;
             // intero che contiene la gittata massima dell'utente (fino a quale distanza gli altri utenti possono essere colpiti)
             int gittata = 0;
             // puntatore all'array contenente le distanze degli altri giocatori
             int* distanzeGiocatori = calcolaDistanzeGiocatori(nGiocatori, giocatori, posizioneGiocatore);
             // il nome del giocatore a cui si intende sparare
-            char nomeBersaglio[NOME_UTENTE_LEN + 1];
+            char nomeGiocatoreScelto[NOME_UTENTE_LEN + 1];
             // e il puntatore al giocatore bersagliato
-            Giocatore* giocatoreBersaglio = NULL;
+            Giocatore* giocatoreScelto = NULL;
             // arma in uso dal giocatore, ottenuta dalla funzione prendiArmaGiocatore
             Carta armaInUso = prendiArmaGiocatore(*giocatore);
-
-            // inizializzazione dell'array a 0, poi la dimensione sarà riaggiustata al calcolo delle distanze
-            int *giocatoriRaggiungibili = calloc(0, sizeof(int));
-            if (giocatoriRaggiungibili == NULL) {
-                printf("\nImpossibile allocare dinamicamente memoria.");
-                exit(-1);
-            }
 
             printf("\nLa carta 'Bang!' ti permette di infliggere danni a un giocatore.");
             // calcolo della gittata
@@ -224,34 +222,41 @@ bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGi
 
             // mostro all'utente i giocatori e le loro distanze
             printf("\nConsiderate le carte a disposizione, questi sono i giocatori a cui puoi infliggere danno:");
-            mostraDistanze(nGiocatori, giocatori, posizioneGiocatore);
+            mostraDistanze(nGiocatori, giocatori, posizioneGiocatore, distanzeGiocatori);
 
             // chiedo all'utente a quale giocatore vorrebbe sparare, finché non conferma la sua scelta
             do {
                 printf("\nInserisci il nome del giocatore a cui vorresti sparare: ");
                 do {
-                    scanf(" %49s", nomeBersaglio);
+                    scanf(" %49s", nomeGiocatoreScelto);
                     // il nome fornito deve essere valido
-                    if(strcmp(nomeBersaglio, giocatore->nomeUtente) == 0) {
+                    if(strcmp(nomeGiocatoreScelto, giocatore->nomeUtente) == 0) {
                         printf("\nNon puoi sparare a te stesso!");
                     } else {
-                        for(j = 0; j < nGiocatori; j++) {
-                            if(strcmp(nomeBersaglio, giocatori[j].nomeUtente) == 0) {
-                                if (giocatori[j].puntiVita < 1) {
+                        // itero finché un giocatore con il nome fornito non è trovato, o fino alla fine della lista
+                        for(i = 0; i < nGiocatori || giocatoreScelto != NULL; i++) {
+                            if(strcmp(nomeGiocatoreScelto, giocatori[i].nomeUtente) == 0) {
+                                if (giocatori[i].puntiVita < 1) {
                                     printf("\nNon puoi sparare a questo giocatore!");
-                                } else if(distanzeGiocatori[j] < gittata) {
+                                } else if(distanzeGiocatori[i] < gittata) {
                                     printf("\nQuesto giocatore è troppo lontano!");
                                 } else {
-                                    giocatoreBersaglio = &giocatori[j];
+                                    giocatoreScelto = &giocatori[i];
                                 }
                                 break; // un giocatore con il nome fornito (anche se invalido) è già stato trovato
                             }
                         }
+                        // se il programma arriva qui e giocatoreScelto è null, significa che il nome fornito non esiste
+                        if(giocatoreScelto == NULL) {
+                            printf("\nNon esiste un giocatore con il nome fornito!");
+                        }
                     }
 
-                } while (giocatoreBersaglio == NULL);
+                } while (giocatoreScelto == NULL);
+
+                // chiedo all'utente di confermare la sua scelta
                 printf("\nStai per sparare a %s! Confermi la tua scelta?\n"
-                       "%c/%c) ", nomeBersaglio, PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                       "%c/%c) ", nomeGiocatoreScelto, PROMPT_CONFERMA, PROMPT_RIFIUTA);
                 confermaAzione = getchar();
                 confermaCarta = confermaAzione != PROMPT_RIFIUTA;
                 if (!confermaCarta) {
@@ -260,53 +265,55 @@ bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGi
                     confermaAzione = getchar();
                     if (confermaAzione == PROMPT_RIFIUTA) {
                         printf("\nTorno al menu principale!");
-                        free(giocatoriRaggiungibili);
                         return false;
                     }
                 }
             } while (!confermaCarta);
 
             // verifica di eventuali azioni per evitare lo sparo
-            if (possiedeCartaInGioco(*giocatoreBersaglio, "Barile")) {
+            // primo elemento: carta barile
+            if (possiedeCartaInGioco(*giocatoreScelto, "Barile")) {
                 printf("\nIl giocatore %s possiede una carta 'Barile'. Sarà estratta una carta che, se sarà"
-                       "del seme di Cuori, annullerà completamente l'attacco.",
-                       nomeBersaglio);
-                Carta cartaEstratta = pescaCimaMazzo(mazzoPesca, 1)[0];
-                if (cartaEstratta.semeCarta == CUORI) {
-                    printf("\nLa carta estratta è un %d di Cuori! L'attacco è mancato!", cartaEstratta.numeroCarta);
-                    free(giocatoriRaggiungibili);
+                       "del seme di Cuori, annullerà completamente l'attacco.", nomeGiocatoreScelto);
+                // estraggo una carta (che sarà spostata nel mazzo scarti) attraverso la funzione 'estraiCarte'.
+                // dato che la funzione restituisce un puntatore a un array con un solo elemento, estraggo il primo.
+                if (estraiCarte(mazzoPesca, mazzoScarti, 1)[0].tipologiaCarta == CUORI) {
+                    printf("\nLa carta estratta è di Cuori! L'attacco è mancato!");
                     return true;
                 } else {
                     printf("\nLa carta estratta non è una carta di Cuori!");
                 }
             }
-            int indiceCartaMancato = cercaCartaMazzoPerNome(giocatoreBersaglio->carteMano, "Mancato!");
+
+            // secondo elemento: carta mancato
+            int indiceCartaMancato = cercaCartaMazzoPerNome(giocatoreScelto->carteMano, "Mancato!");
             if (indiceCartaMancato != -1) {
                 printf("\nIl giocatore %s possiede una carta Mancato! Se deciderà di giocarla, potrà evitare l'attacco.",
-                       nomeBersaglio);
-                printf("\nDesideri scartare una carta 'Mancato!' ed evitare l'attacco?\n"
-                       "%c/%c)", PROMPT_CONFERMA, PROMPT_RIFIUTA);
-                getchar(); // pulisco il buffer
+                       nomeGiocatoreScelto);
+                // TODO: pulire lo schermo
+                printf("\nPassa lo schermo a %s per permettergli di scegliere se giocare la carta."
+                       "Premi 'Invio' qualsiasi per continuare.", giocatoreScelto->nomeUtente);
+                getchar(); // aspetto che il giocatore sia sullo schemro
+                printf("\n%s ha giocato una carta 'Bang!' contro di te: desideri scartare una carta 'Mancato!' ed evitare l'attacco?\n"
+                       "%c/%c)", giocatore->nomeUtente, PROMPT_CONFERMA, PROMPT_RIFIUTA);
                 confermaAzione = getchar();
                 if (confermaAzione == PROMPT_CONFERMA) {
-                    printf("\n%s gioca un 'Mancato!' ed evita l'attacco!", nomeBersaglio);
-                    rimuoviCartaMazzo(&giocatoreBersaglio->carteMano,
-                                      giocatoreBersaglio->carteMano.carte[indiceCartaMancato]);
-                    return true;
+                    printf("\n%s gioca un 'Mancato!' ed evita l'attacco!", nomeGiocatoreScelto);
+                    // rimuovo la carta 'Mancato!' appena giocata
+                    rimuoviCartaMazzo(&giocatoreScelto->carteMano, giocatoreScelto->carteMano.carte[indiceCartaMancato]);
+                    return true; // la carta 'Bang!' è stata comunque giocata, quindi termino la funzione
                 } else {
-                    printf("\n%s non ha giocato un 'Mancato!'.", nomeBersaglio);
+                    printf("\n%s ha deciso di non giocare un 'Mancato!'.", nomeGiocatoreScelto);
                 }
             }
             // rimozione del punto vita e fine della funzione
-            printf("\n%s ha sparato a %s, che perde quindi un punto vita!", giocatore->nomeUtente, nomeBersaglio);
-            rimuoviPuntiVita(giocatoreBersaglio, 1);
+            printf("\n%s ha sparato a %s, che perde quindi un punto vita!", giocatore->nomeUtente, nomeGiocatoreScelto);
+            rimuoviPuntiVita(giocatoreScelto, 1);
         } else if (strcmp(carta.nomeCarta, "Birra") == 0) {
             // verifico che il giocatore non abbia già il massimo della vita
-            if ((giocatore->ruoloAssegnato == SCERIFFO && giocatore->puntiVita == PUNTI_VITA_SCERIFFO) ||
-                (giocatore->ruoloAssegnato != SCERIFFO && giocatore->puntiVita == PUNTI_VITA_GENERICO)
-                    ) {
+            if (giocatore->puntiVita == prendiVitaMassima(*giocatore)) {
                 printf("\nHai già il massimo della vita!");
-                return false;
+                return false; // la carta non è stata giocata
             }
             printf("\n%s ha utilizzato una birra e guadagna un punto vita!", giocatore->nomeUtente);
             giocatori[posizioneGiocatore].puntiVita++;
@@ -314,72 +321,172 @@ bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGi
             printf("\n%s pesca 2 carte!", giocatore->nomeUtente);
             pescaCarte(mazzoPesca, &giocatori[posizioneGiocatore], 2);
         } else if (strcmp(carta.nomeCarta, "Panico!") == 0) {
-            int j;
+            // posizione della carta del mazzo che si vuole rubare
+            int posizioneCartaDaRubare;
             // puntatore all'array contenente le distanze dagli altri giocatori
-            int* distanzeGiocatori = calcolaDistanzeGiocatori(nGiocatori, giocatori, posizioneGiocatore);
+            int* distanze = calcolaDistanzeGiocatori(nGiocatori, giocatori, posizioneGiocatore);
             // nome del giocatore a cui sarà rubata una carta
-            char nomeBersaglio[NOME_UTENTE_LEN + 1];
+            char nomeGiocatoreScelto[NOME_UTENTE_LEN + 1];
             // e il suo puntatore
-            Giocatore* giocatoreBersaglio = NULL;
+            Giocatore* giocatoreScelto = NULL;
+            // puntatore alla carta che si intende rubare
+            Carta* cartaDaRubare;
 
-            // mostro le distanze dagli altri giocatori
-            mostraDistanze(nGiocatori, giocatori, posizioneGiocatore);
 
             // chiedo all'utente il nome del giocatore che intende bersagliare
             do {
-                printf("\nInserisci il nome del giocatore a cui rubare una carta!\n"
-                       "?) ");
-                scanf(" %49s", nomeBersaglio);
-                if(strcmp(nomeBersaglio, giocatore->nomeUtente) == 0) {
-                    printf("\nNon puoi rubare una carta a te stesso!");
-                } else {
-                    for (j = 0; j < nGiocatori; j++) {
-                        if(giocatori[j].puntiVita < 1) {
-                            printf("\nNon puoi sparare a questo giocatore!");
-                        } else if(distanzeGiocatori[j] != 1) {
-                            printf("\nPuoi selezionare solo giocatori a distanza uno!");
-                        } else {
-                            giocatoreBersaglio = &giocatori[j];
-                        }
-                    }
-                }
-            } while(giocatoreBersaglio == NULL);
-
-            printf("\nBene! Queste sono le carte di %s:", nomeBersaglio);
-        } else if (strcmp(carta.nomeCarta, "CatBalou!") == 0) {
-            int j, indiceGiocatoreScelto;
-            char giocatoreScelto[NOME_UTENTE_LEN + 1];
-            bool ripetizioneCiclo = true;
-
-            do {
-                printf("\nScegli il giocatore a cui far scartare una carta!");
-                for (j = 0; j < nGiocatori; j++) {
-                    if (strcmp(giocatori[j].nomeUtente, giocatore->nomeUtente) == 0 || giocatori[j].puntiVita == 0)
-                        continue;
-                    printf("*) %s", giocatori[j].nomeUtente);
-                }
-
-                printf("?) ");
                 do {
-                    scanf(" %49s", giocatoreScelto);
-                    if (strcmp(giocatoreScelto, giocatore->nomeUtente) != 0) {
-                        for (j = 0; ripetizioneCiclo || j < nGiocatori; j++) {
-                            if (strcmp(giocatori[j].nomeUtente, giocatoreScelto) == 0) {
-                                indiceGiocatoreScelto = j;
-                                ripetizioneCiclo = false;
+                    // mostro le distanze dagli altri giocatori
+                    mostraDistanze(nGiocatori, giocatori, posizioneGiocatore, distanze);
+                    printf("\nInserisci il nome del giocatore a cui rubare una carta!\n"
+                           "?) ");
+                    scanf(" %49s", nomeGiocatoreScelto);
+                    if(strcmp(nomeGiocatoreScelto, giocatore->nomeUtente) == 0) {
+                        printf("\nNon puoi rubare una carta a te stesso!");
+                    } else {
+                        // itero finché un giocatore con il nome fornito non è trovato, o fino alla fine della lista
+                        for (i = 0; i < nGiocatori || giocatoreScelto != NULL; i++) {
+                            // cerco l'utente con il nome fornito
+                            if(strcmp(giocatori[i].nomeUtente, nomeGiocatoreScelto) == 0) {
+                                // verifico che il nome fornito sia valido
+                                if(giocatori[i].puntiVita < 1) {
+                                    printf("\nNon puoi sparare a questo giocatore!");
+                                } else if(distanze[i] != 1) {
+                                    printf("\nPuoi selezionare solo giocatori a distanza uno!");
+                                } else {
+                                    giocatoreScelto = &giocatori[i];
+                                }
+                                break; // un giocatore, anche se invalido, è già stato trovato
                             }
                         }
+                        // se il programma arriva qui e giocatoreScelto è null, significa che il nome fornito non esiste
+                        if(giocatoreScelto == NULL) {
+                            printf("\nNon esiste un giocatore con il nome fornito!");
+                        }
                     }
-                    ripetizioneCiclo = ripetizioneCiclo && giocatori[indiceGiocatoreScelto].puntiVita > 0;
-                    if (ripetizioneCiclo)
-                        printf("\nIl nome inserito non è valido! Inserisci un altro utente: ");
-                } while (ripetizioneCiclo);
+                } while(giocatoreScelto == NULL);
 
-                printf("\nConfermi la tua scelta di sparare a %s?"
-                       "%c/%c) ", giocatori[indiceGiocatoreScelto].nomeUtente, PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                // e chiedo all'utente di confermare la scelta
+                printf("\nHai scelto di rubare una carta a %s. Confermi?\n"
+                       "%c/%c) ", nomeGiocatoreScelto, PROMPT_CONFERMA, PROMPT_RIFIUTA);
                 confermaAzione = getchar();
-                confermaCarta = confermaAzione != PROMPT_RIFIUTA;
-                if (!confermaCarta) {
+                if(confermaAzione == PROMPT_RIFIUTA) {
+                    giocatoreScelto = NULL; // annullo la scelta del giocatore
+
+                    printf("\nScelta annullata! Desideri tornare al menu principale?\n"
+                           "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                    confermaAzione = getchar();
+                    if(confermaAzione == PROMPT_CONFERMA) {
+                        printf("\nTorno al menu principale!");
+                        return false;
+                    }
+                }
+
+                // se la mano del giocatore è piena, prima di rubare una carta bisogna scartarne una
+                if(manoPiena(*giocatore)) {
+                    printf("\nLa tua mano è già piena, scarta una carta prima!");
+                    scartaCarta(&giocatore->carteMano, mazzoScarti);
+                }
+
+
+
+                do {
+                    // chiedo all'utente la posizione della carta da rubare
+                    do {
+                        // mostro le carte disponibili
+                        printf("\nQueste sono le carte di %s:", nomeGiocatoreScelto);
+                        mostraCarteMazzo(giocatoreScelto->carteMano);
+
+                        printf("\nInserisci la posizione della carta da rubare!\n"
+                               "?) ");
+                        scanf("%d", &posizioneCartaDaRubare);
+
+                        // verifico che la posizione sia valida
+                        if(posizioneCartaDaRubare <= 0 || posizioneCartaDaRubare > giocatoreScelto->carteMano.numeroCarte)
+                            printf("\nInserisci una posizione valida!");
+                    } while (posizioneCartaDaRubare <= 0 || posizioneCartaDaRubare > giocatoreScelto->carteMano.numeroCarte);
+                    // salvo da parte la carta indicata dal giocatore
+                    cartaDaRubare = &giocatoreScelto->carteMano.carte[posizioneCartaDaRubare - 1];
+
+
+                    // mostro al giocatore la carta da rubare
+                    printf("\nHai deciso di rubare questa carta!");
+                    mostraCarta(*cartaDaRubare);
+                    // chiedo al giocatore di confermare la scelta della carta
+                    printf("\nConfermi la tua scelta?\n"
+                           "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                    confermaAzione = getchar();
+                    if(confermaAzione == PROMPT_RIFIUTA) {
+                        // controllo che il giocatore voglia cambiare carta, cambiare giocatore, o altrimenti torno al menu principale
+                        printf("\nDesideri cambiare carta?\n"
+                               "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                        confermaAzione = getchar();
+                        if(confermaAzione == PROMPT_RIFIUTA) {
+                            printf("\nDesideri cambiare giocatore?\n"
+                                   "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                            confermaAzione = getchar();
+                            if(confermaAzione == PROMPT_RIFIUTA) {
+                                printf("\nTorno al menu principale!");
+                                return false;
+                            } else {
+                                printf("\nBene, scegli un altro giocatore!");
+                                giocatoreScelto = NULL; // resetto il giocatore scelto, così il ciclo si ripete
+                            }
+                        } else {
+                            cartaDaRubare = NULL; // resetto la carta scelta, così il ciclo si ripete
+                        }
+                    }
+                } while (cartaDaRubare == NULL);
+            } while(giocatoreScelto == NULL);
+
+            // la scelta è stata confermata, quindi rimuovo la carta dal mazzo da rubare e la aggiungo a quello del giocatore
+            rimuoviCartaMazzo(&giocatoreScelto->carteMano, *cartaDaRubare);
+            aggiungiCartaMazzo(&giocatore->carteMano, *cartaDaRubare);
+            printf("\n%s ruba una carta '%s' a %s!", giocatore->nomeUtente, cartaDaRubare->nomeCarta, giocatoreScelto->nomeUtente);
+        } else if (strcmp(carta.nomeCarta, "CatBalou!") == 0) {
+            // nome del giocatore a cui far scartare una carta
+            char nomeGiocatoreScelto[NOME_UTENTE_LEN + 1];
+            // puntatore al giocatore a cui far scartare una carta
+            Giocatore* giocatoreScelto;
+
+            do {
+                // mostro all'utente la lista dei giocatori in vita, escluso sé stesso
+                printf("\nScegli il giocatore a cui far scartare una carta!");
+                for (i = 0; i < nGiocatori; i++) {
+                    if (strcmp(giocatori[i].nomeUtente, giocatore->nomeUtente) == 0 || giocatori[i].puntiVita == 0)
+                        continue;
+                    printf("*) %s", giocatori[i].nomeUtente);
+                }
+
+                // e gli chiedo di inserire un nome valido
+                printf("?) ");
+                do {
+                    scanf(" %49s", nomeGiocatoreScelto);
+                    // verifico che il nome fornito sia valido
+                    if (strcmp(nomeGiocatoreScelto, giocatore->nomeUtente) != 0) {
+                        // itero finché un giocatore con il nome fornito non è trovato, o fino alla fine della lista
+                        for (i = 0; i < nGiocatori || giocatoreScelto != NULL; i++) {
+                            if (strcmp(giocatori[i].nomeUtente, nomeGiocatoreScelto) == 0) {
+                                if(giocatori[i].puntiVita < 1) {
+                                    printf("\nIl giocatore scelto è invalido! Inserisci un altro nome.");
+                                } else {
+                                    giocatoreScelto = &giocatori[i];
+                                }
+                            }
+                            break; // un giocatore è stato trovato, anche se invalido
+                        }
+                        // se il programma arriva qui e giocatoreScelto è null, significa che il nome fornito non esiste
+                        if(giocatoreScelto == NULL) {
+                            printf("\nNon esiste un giocatore con il nome fornito!");
+                        }
+                    } else {
+                        printf("\nNon puoi scegliere te stesso!");
+                    }
+                } while (giocatoreScelto == NULL); // in questo modo il ciclo si ripete finché un giocatore non è trovato
+
+                printf("\nConfermi la tua di far scartare una carta a %s?"
+                       "%c/%c) ", giocatoreScelto->nomeUtente, PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                if (confermaAzione != PROMPT_RIFIUTA) {
                     printf("\nDesideri scegliere un altro giocatore? Inserendo no, tornerai al menu principale\n"
                            "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
                     confermaAzione = getchar();
@@ -387,31 +494,34 @@ bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGi
                         printf("\nTorno al menu principale!");
                         return false;
                     }
+                } else {
+                    printf("\nScegli un altro giocatore!");
+                    giocatoreScelto = NULL; // annullo il giocatore scelto, così il ciclo si ripete
                 }
-            } while (!confermaCarta);
+            } while (giocatoreScelto == NULL);
 
+            // TODO: pulisci lo schermo
             printf("\n%s ha giocato un Cat Balou contro %s, che deve scartare una carta!", giocatore->nomeUtente,
-                   giocatoreScelto);
-            printf("\nPassa lo schermo a %s per permettergli di scegliere quale carta scartare.", giocatoreScelto);
-            scartaCarta(&giocatori[indiceGiocatoreScelto], NULL);
+                   nomeGiocatoreScelto);
+            printf("\nPassa lo schermo a %s per permettergli di scegliere quale carta scartare."
+                   "Premi 'Invio' appena sei pronto.", nomeGiocatoreScelto);
+            getchar(); // aspetto che il cambio schermo sia avvenuto
+            scartaCarta(&giocatoreScelto->carteMano, NULL);
         } else if (strcmp(carta.nomeCarta, "Mancato!") == 0) {
             printf("\nNon puoi giocare questa carta direttamente, ma solo quando stai subendo uno sparo!");
+            return false;
         } else if (strcmp(carta.nomeCarta, "Gatling") == 0) {
-            int j;
-
             printf("\n%s ha giocato un Gatling: tutti i giocatori perdono un punto vita!", giocatore->nomeUtente);
-            for (j = 0; j < nGiocatori; j++) {
-                if (j != posizioneGiocatore && giocatori[j].puntiVita > 0) {
-                    rimuoviPuntiVita(&giocatori[j], 1);
+            for (i = 0; i < nGiocatori; i++) {
+                if (i != posizioneGiocatore && giocatori[i].puntiVita > 0) {
+                    rimuoviPuntiVita(&giocatori[i], 1);
                 }
             }
         } else if (strcmp(carta.nomeCarta, "Saloon") == 0) {
-            int j;
-
             printf("\n%s ha giocato un Saloon: tutti i giocatori guadagnano un punto vita!", giocatore->nomeUtente);
-            for (j = 0; j < nGiocatori; j++) {
-                if (j != posizioneGiocatore && giocatori[j].puntiVita > 0) {
-                    giocatori[j].puntiVita++;
+            for (i = 0; i < nGiocatori; i++) {
+                if (i != posizioneGiocatore && giocatori[i].puntiVita > 0) {
+                    giocatori[i].puntiVita++;
                 }
             }
         } else if (strcmp(carta.nomeCarta, "WellsFargo") == 0) {
@@ -421,40 +531,60 @@ bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGi
         // SECONDA PARTE: carte istantanee speciali
     } else if (carta.tipologiaCarta == ISTANTANEA_SPECIAL) {
         if (strcmp(carta.nomeCarta, "Duello") == 0) {
-            int j, indiceGiocatoreScelto, turnoDuello = 0, cartaBangDaScartare;
-            char giocatoreScelto[NOME_UTENTE_LEN + 1];
-            bool ripetizioneCiclo, vittoriaSfidante = false, vittoriaSfidato = false;
-            Giocatore *vincitoreDuello;
+            // la posizione del giocatore sfidato a duello
+            int indiceGiocatoreScelto;
+            // variabile di appoggio che contiene la posizione della carta bang da scartare a ogni turno del duello
+            // se la carta non esiste, il valore assunto è '-1'
+            int posizioneCartaBangDaScartare;
+            // nome del giocatore sfidato a duello
+            char nomeGiocatoreScelto[NOME_UTENTE_LEN + 1];
+            // e il puntatore al giocatore
+            Giocatore* giocatoreScelto = NULL;
+            // puntatori al, rispettivamente, vincitore e perdente del duello
+            Giocatore* vincitoreDuello, *perdenteDuello;
+            // variabile di appoggio che contiene il giocatore che deve giocare il turno corrente del duello
+            Giocatore* duellanteTurnoCorrente;
+            // variabili di appoggio che tengono conto delle fasi del duello
+            bool vittoriaSfidante = false, vittoriaSfidato = false;
 
+            // mostro a schermo la lista degli utenti
+            // TODO: raccogliere in una subroutine (?)
             printf("\nInserisci il nome del giocatore da sfidare a duello!");
-            for (j = 0; j < nGiocatori; j++) {
-                if (strcmp(giocatori[j].nomeUtente, giocatore->nomeUtente) == 0 || giocatori[j].puntiVita == 0)
+            for (i = 0; i < nGiocatori; i++) {
+                if (strcmp(giocatori[i].nomeUtente, giocatore->nomeUtente) == 0 || giocatori[i].puntiVita == 0)
                     continue;
-                printf("*) %s", giocatori[j].nomeUtente);
+                printf("*) %s", giocatori[i].nomeUtente);
             }
 
-            printf("?) ");
             do {
+                // chiedo all'utente di inserire un nome
                 do {
-                    scanf(" %49s", giocatoreScelto);
-                    if (strcmp(giocatoreScelto, giocatore->nomeUtente) != 0) {
-                        for (j = 0; ripetizioneCiclo || j < nGiocatori; j++) {
-                            if (strcmp(giocatori[j].nomeUtente, giocatoreScelto) == 0) {
-                                indiceGiocatoreScelto = j;
-                                ripetizioneCiclo = false;
+                    scanf(" %49s", nomeGiocatoreScelto);
+                    // verifico che il nome fornito sia valido
+                    if (strcmp(nomeGiocatoreScelto, giocatore->nomeUtente) != 0) {
+                        // itero finché un giocatore con il nome fornito non è trovato, o fino alla fine della lista
+                        for (i = 0; i < nGiocatori || giocatoreScelto != NULL; i++) {
+                            if (strcmp(giocatori[i].nomeUtente, nomeGiocatoreScelto) == 0) {
+                                if(giocatori[i].puntiVita < 1) {
+                                    printf("\nIl giocatore scelto è invalido! Inserisci un altro nome.");
+                                } else {
+                                    giocatoreScelto = &giocatori[i];
+                                }
                             }
+                            break; // un giocatore è stato trovato, anche se invalido
                         }
+                        // se il programma arriva qui e giocatoreScelto è null, significa che il nome fornito non esiste
+                        if(giocatoreScelto == NULL) {
+                            printf("\nNon esiste un giocatore con il nome fornito!");
+                        }
+                    } else {
+                        printf("\nNon puoi scegliere te stesso!");
                     }
-                    ripetizioneCiclo = ripetizioneCiclo && giocatori[indiceGiocatoreScelto].puntiVita > 0;
-                    if (ripetizioneCiclo)
-                        printf("\nIl nome inserito non è valido! Inserisci un altro utente: ");
-                } while (ripetizioneCiclo);
+                } while (giocatoreScelto == NULL); // in questo modo il ciclo si ripete finché un giocatore non è trovato
 
-                printf("\nSei sicuro di voler sfidare %s a duello?\n"
-                       "%c/%c) ", giocatori[indiceGiocatoreScelto].nomeUtente, PROMPT_CONFERMA, PROMPT_RIFIUTA);
-                confermaAzione = getchar();
-                confermaCarta = confermaAzione != PROMPT_RIFIUTA;
-                if (!confermaCarta) {
+                printf("\nConfermi la tua scelta di sfidare %s?"
+                       "%c/%c) ", nomeGiocatoreScelto, PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                if (confermaAzione != PROMPT_RIFIUTA) {
                     printf("\nDesideri scegliere un altro giocatore? Inserendo no, tornerai al menu principale\n"
                            "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
                     confermaAzione = getchar();
@@ -462,56 +592,75 @@ bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGi
                         printf("\nTorno al menu principale!");
                         return false;
                     }
+                } else {
+                    printf("\nScegli un altro giocatore!");
+                    giocatoreScelto = NULL; // annullo il giocatore scelto, così il ciclo si ripete
                 }
-            } while (!confermaCarta);
+            } while (giocatoreScelto == NULL);
 
-            printf("\nSi dia inizio al duello tra %s e %s!", giocatore->nomeUtente,
-                   giocatori[indiceGiocatoreScelto].nomeUtente);
+            // il giocatore è confermato, e il duello può avere inizio
+            printf("\nSi dia inizio al duello tra %s e %s!", giocatore->nomeUtente, giocatoreScelto->nomeUtente);
             printf("\nEstrarrò una carta 'Bang!' una volta a testa per ciascun giocatore. Il primo a finirle perderà un punto vita!");
+            printf("\nIl primo ad iniziare sarà il giocatore sfidato!");
+            duellanteTurnoCorrente = giocatoreScelto;
 
             do {
-                // è il turno del giocatore sfidato
-                if (turnoDuello % 2 == 0) {
-                    cartaBangDaScartare = cercaCartaMazzoPerNome(giocatori[indiceGiocatoreScelto].carteMano, "Bang!");
-                    vittoriaSfidante = cartaBangDaScartare == -1;
-                    if (vittoriaSfidante) {
-                        printf("\n%s scarta una carta Bang! Ora tocca allo sfidante.",
-                               giocatori[indiceGiocatoreScelto].nomeUtente);
-                        rimuoviCartaMazzo(&giocatori[indiceGiocatoreScelto].carteMano,
-                                          giocatori[indiceGiocatoreScelto].carteMano.carte[cartaBangDaScartare]);
+                printf("\nE' il turno di %s!", duellanteTurnoCorrente->nomeUtente);
+                // cerco la carta 'Bang!' nel mazzo del duellante
+                posizioneCartaBangDaScartare = cercaCartaMazzoPerNome(giocatoreScelto->carteMano, "Bang!");
+
+                // in questo turno, il giocatore non possiede una carta 'Bang!', e quindi ha perso.
+                if(posizioneCartaBangDaScartare == -1) {
+                    // inserisco il puntatore al giocatore che ha vinto nella variabile relativa
+                    if(duellanteTurnoCorrente == giocatoreScelto) {
+                        vincitoreDuello = giocatore;
+                        perdenteDuello = giocatoreScelto;
+                    } else {
+                        vincitoreDuello = giocatoreScelto;
+                        perdenteDuello = giocatore;
                     }
-                    // è il turno dello sfidante
+                // il giocatore possiede una carta 'Bang!', quindi la scarta e si va al turno successivo
                 } else {
-                    cartaBangDaScartare = cercaCartaMazzoPerNome(giocatore->carteMano, "Bang!");
-                    vittoriaSfidato = cartaBangDaScartare == -1;
-                    if (vittoriaSfidato) {
-                        printf("\n%s scarta una carta Bang! Ora tocca al giocatore sfidato.", giocatore->nomeUtente);
-                        rimuoviCartaMazzo(&giocatori[indiceGiocatoreScelto].carteMano,
-                                          giocatori[indiceGiocatoreScelto].carteMano.carte[cartaBangDaScartare]);
+                    // rimuovo la carta dalla mano e la inserisco nel mazzo scarti
+                    // TODO: verificare di aver fatto questa cosa ovunque
+                    rimuoviCartaMazzo(&duellanteTurnoCorrente->carteMano, duellanteTurnoCorrente->carteMano.carte[posizioneCartaBangDaScartare]);
+                    aggiungiCartaMazzo(mazzoPesca, duellanteTurnoCorrente->carteMano.carte[posizioneCartaBangDaScartare]);
+                    printf("\n%s scarta una carta 'Bang!' e supera il turno!", duellanteTurnoCorrente->nomeUtente);
+
+                    // cambio duellante per il prossimo turno
+                    if(duellanteTurnoCorrente == giocatoreScelto) {
+                        duellanteTurnoCorrente = giocatore;
+                    } else {
+                        duellanteTurnoCorrente = giocatoreScelto;
                     }
                 }
-                turnoDuello++;
-            } while (!vittoriaSfidante && !vittoriaSfidato);
+            // ripeti il turno finché non è stato determinato un vincitore
+            } while (vincitoreDuello == NULL && perdenteDuello == NULL);
 
-            if (vittoriaSfidante) {
-                vincitoreDuello = giocatore;
-            } else {
-                vincitoreDuello = &giocatori[indiceGiocatoreScelto];
-            }
-            printf("%s ha esaurito le carte Bang!, e pertanto perde il duello!", vincitoreDuello->nomeUtente);
-            rimuoviPuntiVita(vincitoreDuello, 3);
+            printf("%s ha esaurito le carte 'Bang!', quindi %s vince il duello!", perdenteDuello->nomeUtente, vincitoreDuello->nomeUtente);
+            // rimuovo i punti vita dello sconfitto
+            rimuoviPuntiVita(perdenteDuello, 3);
         } else if (strcmp(carta.nomeCarta, "Emporio") == 0) {
             printf("\nLa carta 'Emporio' estrae dal mazzo di pesca un numero di carte pari a quello dei giocatori in vita,"
                    "per poi permettere ad ogni utente (a partire da chi ha giocato la carta) di pescare una carta da questo mazzo.");
-            int j, k, giocatoriInVita, cartaScelta, nCarteEstratte = 0;
-            Carta *carteEstratte = NULL; // array dinamico contenente le carte estratte dal mazzo di pesca
-            Carta *carteEstratteTmp = NULL; // array utilizzato quando viene rimossa una carta dal mazzo di sopra
+
+            // variabile di appoggio per i cicli interni
+            int j;
+            // variabili contenenti il numero di giocatori in vita e il numero di carte estratte
+            int giocatoriInVita = 0, nCarteEstratte = 0;
+            // variabile d'appoggio contenente la posizione della carta scelta dall'utente
+            int cartaScelta;
+            // array dinamico contenente le carte estratte dal mazzo di pesca
+            Carta *carteEstratte = NULL;
+            // array utilizzato quando viene rimossa una carta dal mazzo di sopra
+            Carta *carteEstratteTmp = NULL;
 
             // calcolo dei giocatori in vita
-            for (j = 0; j < nGiocatori; j++) {
-                if (giocatori[j].puntiVita > 0)
+            for (i = 0; i < nGiocatori; i++) {
+                if (giocatori[i].puntiVita > 0)
                     giocatoriInVita++;
             }
+
             printf("\nEssendoci %d giocatori in vita, saranno pescate %d carte.", giocatoriInVita, giocatoriInVita);
 
             // creazione dell'array dinamico contenente tante carte estratte quanti sono i giocatori in vita
@@ -520,6 +669,7 @@ bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGi
                 printf("\nErrore: impossibile allocare dinamicamente"); // TODO: 'utils'
                 exit(-1);
             }
+
             // e allocazione della memoria sufficiente per l'array in cui inserire temporaneamente le carte che non sono state selezionate
             // di dimensione giocatoriInVita - 1, dato che si può estrarre solo una carta alla volta per giocatore
             carteEstratteTmp = (Carta *) calloc(giocatoriInVita - 1, sizeof(Carta));
@@ -532,36 +682,49 @@ bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGi
             carteEstratte = pescaCimaMazzo(mazzoPesca, giocatoriInVita);
 
             // a partire dal giocatore che ha estratto la carta, chiedo di pescarne una da quelle appena ottenute
-            j = posizioneGiocatore;
+            i = posizioneGiocatore;
+            // il ciclo si ripete finché tutti i giocatori non hanno estratto almeno una carta
             while (nCarteEstratte < giocatoriInVita) {
-                printf("\n%s, è il tuo turno di pescare!", giocatori[j].nomeUtente);
-                if (giocatori[j].carteMano.numeroCarte == giocatori[j].puntiVita) {
-                    printf("\nMa prima devi scegliere una carta da scartare.");
-                    scartaCarta(&giocatori[j], NULL);
+                // TODO: pulisci lo schermo
+                printf("\nTocca a %s pescare! Passagli lo schermo, e premi 'Invio' appena sei pronto.", giocatori[i].nomeUtente);
+                getchar(); // aspetto che venga premuto invio
+
+                // la mano del giocatore è piena, quindi deve scartare una carta
+                if (manoPiena(giocatori[i])) {
+                    printf("\nPrima devi scegliere una carta da scartare!");
+                    scartaCarta(&giocatori[i].carteMano, mazzoScarti);
                 }
 
-                printf("\nScegli una carta da pescare:");
-                for (k = 0; k < giocatoriInVita - nCarteEstratte; k++) {
-                    printf("%d) %s", k + 1, carteEstratte[k].nomeCarta);
-                }
                 do {
+                    // stampo le carte disponibili
+                    for (j = 0; j < giocatoriInVita - nCarteEstratte; j++) {
+                        printf("\n%d) ", j+1);
+                        mostraCarta(carteEstratte[j]);
+                    }
+
+                    // e chiedo all'utente di sceglierne una
                     printf("\nInserisci il numero della carta da pescare: \n"
                            "?) ");
                     scanf("%d", &cartaScelta);
+
+                    // verifico che il valore inserito sia valido
                     if (cartaScelta <= 0 || cartaScelta > giocatoriInVita)
                         printf("\nIl valore inserito non è valido!");
                 } while (cartaScelta <= 0 || cartaScelta > giocatoriInVita);
-                printf("\nBene! Hai scelto di pescare una carta '%s'.", carteEstratte[cartaScelta - 1].nomeCarta);
+                printf("\nBene! Questa è la carta che hai pescato:\n.");
+                mostraCarta(carteEstratte[cartaScelta - 1]);
 
                 // rimozione della carta dal mazzetto pescato e aggiunta alla mano del giocatore
-                for (k = 0; k < giocatoriInVita - nCarteEstratte; k++) {
-                    if (k != cartaScelta - 1)
-                        carteEstratteTmp[k] = carteEstratte[k];
+                // ciò avviene popolando l'array 'carteEstratteTmp' con una copia delle carte estratte, meno quella scelta
+                for (j = 0; j < giocatoriInVita - nCarteEstratte; j++) {
+                    if (j != cartaScelta - 1)
+                        carteEstratteTmp[j] = carteEstratte[j];
                 }
+
                 // è stata estratta una carta
                 nCarteEstratte++;
                 // aggiunta della carta estratta al mazzo del giocatore
-                aggiungiCartaMazzo(&giocatori[j].carteMano, carteEstratte[cartaScelta - 1]);
+                aggiungiCartaMazzo(&giocatori[i].carteMano, carteEstratte[cartaScelta - 1]);
                 // elimino il vecchio mazzetto di carte
                 free(carteEstratte);
                 // e al suo posto uso quello senza la carta che è stata selezionata
@@ -570,28 +733,40 @@ bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGi
                 // creo un nuovo puntatore a un array vuoto per il mazzo temporaneo, perché se utilizzassi
                 // una realloc() starei modificando anche carteEstratte
                 carteEstratteTmp = (Carta *) calloc(giocatoriInVita - nCarteEstratte, sizeof(Carta));
+                if(carteEstratteTmp == NULL) {
+                    printf("\nImpossibile allocare dinamicamente.");
+                    exit(-1); // TODO: utils
+                }
+
                 // uso il modulo per tornare all'inizio nel caso in cui dovessi aver raggiunto la fine dell'array giocatori
-                j = (j + 1) % nGiocatori;
+                i = (i + 1) % nGiocatori;
             }
+            // libero gli array allocati dinamicamente
             free(carteEstratte);
             free(carteEstratteTmp);
+
             printf("\nEstrazione terminata!");
         } else if (strcmp(carta.nomeCarta, "Indiani") == 0) {
-            int j, posizioneCartaBang;
+            // variabile d'appoggio che contiene la posizione della carta 'Bang!' di ogni giocatore.
+            // vale '-1' se il giocatore non possiede la carta
+            int posizioneCartaBang;
 
             printf("\nAttacco di indiani in arrivo! Ogni giocatore (eccetto chi ha giocato la carta) deve giocare"
                    "una carta 'Bang!', oppure perdere un punto vita!");
-            for (j = 0; j < nGiocatori; j++) {
-                if (j != posizioneGiocatore && giocatori[j].puntiVita > 0) {
-                    posizioneCartaBang = cercaCartaMazzoPerNome(giocatori[j].carteMano, "Bang!");
+            for (i = 0; i < nGiocatori; i++) {
+                // il giocatore deve essere in vita, e chi ha giocato la carta non viene attaccato
+                if (i != posizioneGiocatore && giocatori[i].puntiVita > 0) {
+                    posizioneCartaBang = cercaCartaMazzoPerNome(giocatori[i].carteMano, "Bang!");
                     if (posizioneCartaBang == -1) {
-                        printf("\n%s non possiede una carta 'Bang!', e perde quindi un punto vita!",
-                               giocatori[j].nomeUtente);
-                        rimuoviPuntiVita(&giocatori[j], 1);
+                        printf("\n%s non possiede una carta 'Bang!', e perde quindi un punto vita!", giocatori[i].nomeUtente);
+                        rimuoviPuntiVita(&giocatori[i], 1);
                     } else {
-                        printf("\n%s scarta una carta 'Bang!' ed evita l'attacco degli indiani!",
-                               giocatori[j].nomeUtente);
-                        rimuoviCartaMazzo(&giocatori[j].carteMano, giocatori[j].carteMano.carte[posizioneCartaBang]);
+                        printf("\n%s scarta una carta 'Bang!' ed evita l'attacco degli indiani!", giocatori[i].nomeUtente);
+
+                        // sposto la carta 'Bang!' nel mazzo scarti
+                        aggiungiCartaMazzo(mazzoScarti, giocatori[i].carteMano.carte[posizioneCartaBang]);
+                        // e la rimuovo dalla mano del giocatore
+                        rimuoviCartaMazzo(&giocatori[i].carteMano, giocatori[i].carteMano.carte[posizioneCartaBang]);
                     }
                 }
             }
@@ -601,6 +776,12 @@ bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGi
 
         // QUARTA PARTE: carte in gioco
     } else if (carta.tipologiaCarta == EFFETTO) {
+        // verifico che la carta scelta non sia già in gioco
+        if(possiedeCartaInGioco(*giocatore, carta.nomeCarta)) {
+            printf("\nHai già una carta '%s' in gioco!", carta.nomeCarta);
+            return false;
+        }
+
         if (strcmp(carta.nomeCarta, "Barile") == 0) {
             printf("\nLa carta 'Barile' ti consente, fintanto che è in gioco, di schivare una carta 'Bang!'.\n"
                    "Quando vieni colpito, puoi scegliere di estrarre una carta: se questa è di Cuori, allora l'attacco è annullato.");
@@ -622,40 +803,64 @@ bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGi
             aggiungiCartaInGioco(giocatore, giocatore, carta);
             printf("\nHai messo un gioco una 'Dinamite'!");
         } else if (strcmp(carta.nomeCarta, "Prigione") == 0) {
-            char nomeGiocatoreScelto[NOME_UTENTE_LEN];
+            // nome del giocatore scelto per la prigione
+            char nomeGiocatoreScelto[NOME_UTENTE_LEN + 1];
+            // e il puntatore relativo
             Giocatore *giocatoreScelto = NULL;
-            bool giaInPrigione = false;
 
-            // TODO: un giocatore che è già in prigione non può esserci rimesso
             printf("\nLa carta 'Prigione' ti permette di mettere in prigione un giocatore qualsiasi, tranne lo Sceriffo. Un giocatore in prigione, "
                    "prima di giocare il suo turno, estrae una carta: se questa non ha il seme di Cuori, allora la carta prigione è scartata e il giocatore "
                    "salta il turno (pur rimanendo bersaglio degli altri giocatori), altrimenti la prigione è scartata e il turno è giocabile normalmente.");
             printf("\nSu chi intendi giocare la carta?\n");
-            for (i = 0; i < nGiocatori; i++) {
-                if (giocatori[i].puntiVita > 0 && giocatori[i].ruoloAssegnato != SCERIFFO &&
-                    strcmp(giocatori[i].nomeUtente, giocatore->nomeUtente) != 0) {
-                    printf("\n*) %s", giocatori[i].nomeUtente);
-                }
-            }
+
+
             do {
-                printf("?) ");
-                scanf(" %48s", nomeGiocatoreScelto);
-                for (int j = 0; j < nGiocatori; j++) {
-                    if (strcmp(giocatori[j].nomeUtente, nomeGiocatoreScelto) == 0) {
-                        giocatoreScelto = &giocatori[j];
+                // chiedo all'utente di inserire un nome
+                do {
+                    scanf(" %49s", nomeGiocatoreScelto);
+                    // verifico che il nome fornito sia valido
+                    if (strcmp(nomeGiocatoreScelto, giocatore->nomeUtente) != 0) {
+                        // itero finché un giocatore con il nome fornito non è trovato, o fino alla fine della lista
+                        for (i = 0; i < nGiocatori || giocatoreScelto != NULL; i++) {
+                            if (strcmp(giocatori[i].nomeUtente, nomeGiocatoreScelto) == 0) {
+                                if(giocatori[i].puntiVita < 1) {
+                                    printf("\nIl giocatore scelto è invalido! Inserisci un altro nome.");
+                                } else if(giocatori[i].ruoloAssegnato == SCERIFFO) {
+                                    printf("\nNon puoi inviare in prigione lo sceriffo!");
+                                } else if(possiedeCartaInGioco(giocatori[i], "Prigione")) {
+                                    printf("\nIl giocatore scelto è già in prigione!");
+                                } else {
+                                    // il giocatore è valido
+                                    giocatoreScelto = &giocatori[i];
+                                }
+                            }
+                            break; // un giocatore è stato trovato, anche se invalido
+                        }
+                        // se il programma arriva qui e giocatoreScelto è null, significa che il nome fornito non esiste
+                        if(giocatoreScelto == NULL) {
+                            printf("\nNon esiste un giocatore con il nome fornito!");
+                        }
+                    } else {
+                        printf("\nNon puoi scegliere te stesso!");
                     }
+                } while (giocatoreScelto == NULL); // in questo modo il ciclo si ripete finché un giocatore non è trovato
+
+                printf("\nConfermi la tua scelta di sfidare %s?"
+                       "%c/%c) ", nomeGiocatoreScelto, PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                if (confermaAzione != PROMPT_RIFIUTA) {
+                    printf("\nDesideri scegliere un altro giocatore? Inserendo no, tornerai al menu principale\n"
+                           "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                    confermaAzione = getchar();
+                    if (confermaAzione == PROMPT_RIFIUTA) {
+                        printf("\nTorno al menu principale!");
+                        return false;
+                    }
+                } else {
+                    printf("\nScegli un altro giocatore!");
+                    giocatoreScelto = NULL; // annullo il giocatore scelto, così il ciclo si ripete
                 }
-                if (strcmp(giocatore->nomeUtente, giocatoreScelto->nomeUtente) == 0) {
-                    printf("\nNon puoi giocare la prigione su te stesso.");
-                } else if (giocatoreScelto->ruoloAssegnato == SCERIFFO) {
-                    printf("\nNon puoi giocare la prigione sullo sceriffo.");
-                } else if (giocatoreScelto == NULL || giocatoreScelto->puntiVita == 0) {
-                    printf("\nIl nome del giocatore non è valido.");
-                } else if((giaInPrigione = possiedeCartaInGioco(*giocatoreScelto, "Prigione"))) { // TODO: abbastanza schifoso
-                    printf("\nQuesto giocatore è già in prigione!");
-                }
-            } while (giocatoreScelto == NULL || giocatoreScelto->ruoloAssegnato == SCERIFFO ||
-                     giocatoreScelto->puntiVita == 0 || giaInPrigione);
+            } while (giocatoreScelto == NULL);
+
             aggiungiCartaInGioco(giocatore, giocatoreScelto, carta);
             printf("\n%s ha messo in prigione %s!", giocatore->nomeUtente, giocatoreScelto->nomeUtente);
         }
@@ -716,11 +921,11 @@ void scartaCarta(Mazzo *mazzoMano, Mazzo *mazzoScarti) {
     // indice contenente la carta scelta (che è però va da 1 a n)
     int cartaScelta;
 
-    printf("\nScegli una carta da scartare:");
-    // mostro al giocatore le carte nella sua mano
-    mostraCarteInMano(*mazzoMano);
     do {
-        printf("?) ");
+        // mostro al giocatore le carte nella sua mano
+        mostraCarteMazzo(*mazzoMano);
+        printf("\nScegli una carta da scartare:\n"
+               "?) ");
         scanf("%d", &cartaScelta);
         // verifico la correttezza dell'input
         if(cartaScelta <= 0 || cartaScelta > mazzoMano->numeroCarte)
@@ -746,4 +951,34 @@ Carta prendiArmaGiocatore(Giocatore giocatore) {
         if(giocatore.carteGioco.carte[i].tipologiaCarta == ARMA)
             return giocatore.carteGioco.carte[i];
     }
+}
+
+/**
+ * Funzione booleana che determina se la mano del giocatore è piena oppure no.
+ * Il mazzo della mano è pieno se il numero di carte è pari al numero massimo di punti vita.
+ *
+ * @param giocatore Il giocatore di cui verificare la mano
+ * @return Vero se carteMano ha lo stesso numero di carte di maxPuntiVita, altrimenti falso
+ */
+bool manoPiena(Giocatore giocatore) {
+    return giocatore.carteMano.numeroCarte == prendiVitaMassima(giocatore);
+}
+
+/**
+ * Funzione che restituisce la vita massima di un giocatore in base al suo ruolo.
+ *
+ * @param giocatore Il giocatore di cui si vuole conoscere la vita massima.
+ * @return Il numero massimo di punti vita di un giocatore.
+ */
+int prendiVitaMassima(Giocatore giocatore) {
+    int maxPuntiVita;
+
+    // determino il numero massimo di punti vita di un giocatore in base al ruolo
+    if(giocatore.ruoloAssegnato == SCERIFFO) {
+        maxPuntiVita = PUNTI_VITA_SCERIFFO;
+    } else {
+        maxPuntiVita = PUNTI_VITA_GENERICO;
+    }
+
+    return maxPuntiVita;
 }

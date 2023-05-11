@@ -214,7 +214,7 @@ void mostraCarta(Carta carta) {
     prendiTipologiaCarta(carta.tipologiaCarta, tipologiaCarta);
     prendiSemeCarta(carta.semeCarta, semeCarta);
 
-    printf("\nNome: %s\n"
+    printf("Nome: %s\n"
            "Tipologia: %s\n"
            "Numero della carta: %d\n"
            "Seme della carta: %s",
@@ -232,6 +232,7 @@ void mostraCarteMazzo(Mazzo mazzo) {
     if(mazzo.numeroCarte == 0)
         printf("\nNessuna carta presente!");
     for(i = 0; i < mazzo.numeroCarte; i++) {
+        printf("\n%d) ", i+1);
         mostraCarta(mazzo.carte[i]);
     }
 }

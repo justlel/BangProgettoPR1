@@ -62,14 +62,15 @@ typedef struct {
 
 // FUNZIONI SULLE DISTANZE TRA GIOCATORI
 int* calcolaDistanzeGiocatori(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore);
-void mostraDistanze(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore);
+void mostraDistanze(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, int* distanze);
 
 // FUNZIONI SULLE CARTE DEI GIOCATORI
 // SUBROUTINE VISIVE
 void mostraCarteInGiocoAltri(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore);
 // FUNZIONI
 bool possiedeCartaInGioco(Giocatore giocatore, char nomeCarta[NOME_CARTA_LEN + 1]);
-bool giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, Carta carta, Mazzo* mazzoPesca);
+bool giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, Carta carta, Mazzo* mazzoPesca, Mazzo* mazzoScarti);
+bool manoPiena(Giocatore giocatore);
 
 void pescaCarte(Mazzo* mazzoPesca, Giocatore* giocatore, int nCarte); // TODO: Da implementare, con la logica che un giocatore può avere solo tot carte
 void scartaCarta(Mazzo* mazzoMano, Mazzo* mazzoScarti);
@@ -81,3 +82,4 @@ Carta prendiArmaGiocatore(Giocatore giocatore);
 // FUNZIONI SUI GIOCATORI
 void rimuoviPuntiVita(Giocatore* giocatore, int puntiVita);  // TODO: Da implementare, con la logica della morte
 void prendiNomeRuolo(Ruoli ruoli, char nomeRuolo[NOME_RUOLO_LEN_MAX + 1]);
+int prendiVitaMassima(Giocatore giocatore);
