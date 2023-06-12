@@ -56,6 +56,6 @@ void distribuisciCartePartenza(Mazzo* mazzo, Giocatore* giocatori, int nGiocator
 bool verificaCarteInGioco(Salvataggio partita);
 
 void avviaPartita(Salvataggio partita);
-bool partitaTerminata(Salvataggio partita);
+bool partitaTerminata(Salvataggio partita, Ruoli* ruoloVincitore);
 
 void chiudiGioco();

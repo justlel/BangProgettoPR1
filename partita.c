@@ -130,24 +130,47 @@ Salvataggio creaPartita() {
 }
 
 void avviaPartita(Salvataggio partita) {
-    bool ripetizioneCiclo, ripetiScelta = true, bangGiocato, cartaGiocata = false;
-    int promptTurnoScelta, posizioneCartaSelezionata;
-    char ruoloGiocatore[NOME_RUOLO_LEN_MAX + 1];
-    char tmpChoice;
+    // variabili booleane di appoggio per i cicli sottostanti
+    bool ripetizioneCiclo, ripetiScelta = true;
+    // variabili booleane che mantengono informazioni sulle carte giocate nei turni precedenti
+    bool bangGiocato, cartaGiocata = false;
+
+    // variabili di tipo int di appoggio per la selezioni delle carte da giocare e delle opzioni dei prompt durante il turno
+    int i, promptTurnoScelta, posizioneCartaSelezionata;
+
+    // variabili di tipo char di appoggio per la selezione delle opzioni nei prompt durante il turno
+    char ruoloGiocatore[NOME_RUOLO_LEN_MAX + 1], tmpChoice;
+
+    // variabile "Carta" contenente la carta da giocare in questo turno
     Carta cartaSelezionata;
 
-    while(!partitaTerminata(partita)) {
+    // variabile contenente il ruolo dei vincitori al termine della partita
+    Ruoli* ruoloVincitore = NULL;
+
+    // allocazione dinamica del puntatore "ruoloVincitore"
+    ruoloVincitore = (Ruoli*) malloc(sizeof(Ruoli));
+    if(ruoloVincitore == NULL) {
+        printf("\nErrore: impossibile allocare memoria dinamicamente.");
+        exit(0);
+    }
+
+    // inizio della logica del turno
+    while(!partitaTerminata(partita, ruoloVincitore)) { // verifico che la partita non sia terminata
         printf("------ TURNO n° %d ------", partita.prossimoGiocatore + 1);
         
         prendiNomeRuolo(partita.giocatori[partita.prossimoGiocatore].ruoloAssegnato, ruoloGiocatore);
         printf("\n%s, tocca a te giocare! Il tuo ruolo è '%s'", partita.giocatori[partita.prossimoGiocatore].nomeUtente, ruoloGiocatore);
 
-        // TODO: pesca 2 carte
+        // all'inizio del turno, il giocatore pesca due carte
+        pescaCarte(&partita.mazzoPesca, &partita.giocatori[partita.prossimoGiocatore], 2);
 
-        printf("\nPer prima cosa, verifico l'effetto delle tue carte in gioco.");
+        printf("\nPer prima cosa, verifico l'effetto delle tue carte in gioco...");
         // se il giocatore non è morto per effetto di qualche carta in gioco, allora inizia il turno
         if(verificaCarteInGioco(partita)) {
+            printf("\nIniziamo il turno!");
+            bangGiocato = false;
             do {
+                // il giocatore sceglie cosa fare all'inizio del turno
                 do {
                     printf("\nScegli una delle seguenti azioni:\n"
                            "%d) Gioca una delle tue carte\n"
@@ -177,36 +200,49 @@ void avviaPartita(Salvataggio partita) {
                     // il giocatore ha deciso di giocare una carta
                     case PROMPT_TURNO_GIOCA_CARTA:
                         printf("\nBene, queste sono le carte nella tua mano!");
-                        // mostro le carte nella mano del giocatore
-                        mostraCarteMazzo(partita.giocatori[partita.prossimoGiocatore].carteMano);
-                        printf("\nInserisci il numero della carta da selezionare:");
 
+                        ripetizioneCiclo = false;
                         // chiedo al giocatore di scegliere una carta
                         do {
-                            ripetizioneCiclo = false;
-                            printf("\n?) ");
+                            // se il ciclo è stato ripetuto, chiedo al giocatore se desidera giocare un'altra carta
+                            if(ripetizioneCiclo) {
+                                printf("\nDesideri giocare un'altra carta?\n"
+                                       "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                                tmpChoice = getchar();
+                                // torno al menu principale
+                                if(tmpChoice == PROMPT_RIFIUTA) {
+                                    printf("\nTorno al menu principale!");
+                                    break;
+                                }
+                            }
+
+                            // mostro le carte nella mano del giocatore
+                            mostraCarteMazzo(partita.giocatori[partita.prossimoGiocatore].carteMano);
+                            printf("\nInserisci il numero della carta da selezionare: ");
                             scanf("%d", &posizioneCartaSelezionata);
-                            if (posizioneCartaSelezionata <= 0 || posizioneCartaSelezionata >
-                                                                  partita.giocatori[partita.prossimoGiocatore].carteMano.numeroCarte) {
+
+                            if (posizioneCartaSelezionata <= 0 || posizioneCartaSelezionata > partita.giocatori[partita.prossimoGiocatore].carteMano.numeroCarte) {
                                 printf("\nInserisci un valore valido!");
-                                ripetizioneCiclo = true;
+                                ripetizioneCiclo = true; // il valore è invalido: ripeto la richiesta
+                                continue;
                             } else {
-                                cartaSelezionata = partita.giocatori[partita.prossimoGiocatore].carteMano.carte[
-                                        posizioneCartaSelezionata - 1];
+                                cartaSelezionata = partita.giocatori[partita.prossimoGiocatore].carteMano.carte[posizioneCartaSelezionata - 1];
                                 // 'Bang!' può essere giocata solo una volta (ammenoché non si possegga una 'Volcanic' come arma)
                                 if (strcmp(cartaSelezionata.nomeCarta, "Bang!") == 0) {
                                     if (bangGiocato && strcmp(prendiArmaGiocatore(
                                             partita.giocatori[partita.prossimoGiocatore]).nomeCarta, "Volcanic") != 0) {
                                         printf("\nHai già giocato un 'Bang!' in questo turno!");
-                                        ripetizioneCiclo = true;
-                                        // il giocatore deve selezionare un'altra carta perché non può giocare un altro bang
+                                        ripetizioneCiclo = true; // il giocatore deve selezionare un'altra carta perché non può giocare un altro bang
                                         continue;
                                     }
                                 }
+
+                                // la funzione 'giocaCarta' restituisce "False" se la carta non è stata giocata per qualsiasi motivo
                                 // salvo in una variabile booleana un valore che indica se la carta è stata effettivamente giocata o meno
                                 cartaGiocata = giocaCarta(partita.nGiocatori, partita.giocatori,
                                                           partita.prossimoGiocatore, cartaSelezionata,
-                                                          &partita.mazzoPesca);
+                                                          &partita.mazzoPesca, &partita.mazzoScarti);
+
                                 if (!cartaGiocata) {
                                     printf("\nScegli un'altra carta!");
                                     ripetizioneCiclo = true;
@@ -218,39 +254,51 @@ void avviaPartita(Salvataggio partita) {
                             }
                         } while (ripetizioneCiclo);
                         break;
+
+                    // seconda scelta: mostro le carte nella mano del giocatore
                     case PROMPT_TURNO_VEDI_CARTE_MANO:
                         mostraCarteMazzo(partita.giocatori[partita.prossimoGiocatore].carteMano);
                         break;
+                    // terza scelta: mostro le carte in gioco del giocatore
                     case PROMPT_TURNO_VEDI_CARTE_GIOCO:
                         mostraCarteMazzo(partita.giocatori[partita.prossimoGiocatore].carteGioco);
                         break;
+                    // quarta scelta: mostro la distanza tra il giocatore e gli altri
                     case PROMPT_TURNO_VEDI_DISTANZE:
                         mostraDistanze(partita.nGiocatori, partita.giocatori, partita.prossimoGiocatore);
                         break;
+                    // quinta scelta: mostro le carte in gioco degli altri giocatori
                     case PROMPT_TURNO_VEDI_CARTE_GIOCO_ALTRI:
-                        mostraCarteInGiocoAltri(partita.nGiocatori, partita.giocatori,
-                                                partita.giocatori[partita.prossimoGiocatore]);
+                        mostraCarteInGiocoAltri(partita.nGiocatori, partita.giocatori,partita.prossimoGiocatore);
                         break;
+                    // sesta scelta: passo il turno
                     case PROMPT_TURNO_PASSA_TURNO:
-                        printf("\nHai deciso di passare il turno! Sei sicuro?\n");
-                        printf("\n%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                        printf("\nHai deciso di passare il turno! Sei sicuro?\n"
+                               "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
                         tmpChoice = getchar();
-                        ripetiScelta = tmpChoice == PROMPT_RIFIUTA;
-                        if (!ripetiScelta) {
+                        if (tmpChoice == PROMPT_CONFERMA) {
                             printf("\nBene, passiamo il turno al prossimo giocatore!");
                         }
                         break;
+                    // ultima scelta: chiudo il gioco
                     case PROMPT_TURNO_ESCI:
-                        printf("\nSei sicuro di voler uscire?\n");
-                        printf("\n%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                        printf("\nSei sicuro di voler uscire?\n"
+                               "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
                         tmpChoice = getchar();
                         if (tmpChoice == PROMPT_CONFERMA)
                             chiudiGioco();
                 }
             } while (ripetiScelta); // se in una delle sue azioni il giocatore ha scelto "annulla", allora ripeti il ciclo di scelta
         }
-        partita.prossimoGiocatore = (partita.prossimoGiocatore + 1) % partita.nGiocatori;
+
+        // seleziono il prossimo giocatore in vita per il turno successivo
+        do {
+            partita.prossimoGiocatore = (partita.prossimoGiocatore + 1) % partita.nGiocatori;
+        } while(partita.giocatori[partita.prossimoGiocatore].puntiVita < 0);
     }
+    // fine logica del turno
+
+    // TODO: termina partita
 }
 
 bool verificaCarteInGioco(Salvataggio partita) {
@@ -297,8 +345,62 @@ bool verificaCarteInGioco(Salvataggio partita) {
     return true;
 }
 
-bool partitaTerminata(Salvataggio partita) {
+/**
+ * Funzione che verifica che la partita sia terminata (con la vittoria dei giocatori/fuorilegge/sceriffo)
+ * verificandone lo stato, restituendo true o false di conseguenza.
+ * Il secondo parametro rappresenta un puntatore a una variabile di tipo "Ruoli", che, nel caso di vittoria,
+ * conterrà il ruolo che ha vinto la partita.
+ * Se la funzione restituisce "False", allora ruoloVincitore assumerà il valore "-1".
+ *
+ * @param partita Il file contenente il salvataggio della partita da verificare.
+ * @param ruoloVincitore Puntatore alla variabile contenente il ruolo dei vincitori, o "-1" se la partita non è finita.
+ * @return True se la partita è terminata, False altrimenti.
+ */
+bool partitaTerminata(Salvataggio partita, Ruoli* ruoloVincitore) {
+    // variabile contatore
+    int i;
+    // variabili contatori per tutte le tipologie di giocatori ancora in vita
+    int nSceriffi = 0, nFuorilegge = 0, nVice = 0, nPlayer = 0, nRinnegati = 0;
 
+    // iterazione sull'array di giocatori
+    for(i = 0; i < partita.nGiocatori; i++) {
+        if(partita.giocatori[i].puntiVita > 0) {
+            // comincio la conta dei giocatori per categoria
+            switch (partita.giocatori[i].ruoloAssegnato) {
+                case SCERIFFO:
+                    nSceriffi++;
+                    break;
+                case FUORILEGGE:
+                    nFuorilegge++;
+                    break;
+                case VICESCERIFFO:
+                    nVice++;
+                    break;
+                case RINNEGATO:
+                    nRinnegati++;
+                    break;
+                default:
+                    nPlayer++;
+                    break;
+            }
+        }
+    }
+
+    // se una delle condizioni seguenti è vera, allora la partita è terminata, altrimenti è possibile continuare
+    // prima verifica: vittoria degli sceriffi
+    if(nSceriffi > 0 && nFuorilegge == 0) {
+        *ruoloVincitore = SCERIFFO;
+    // seconda verifica: vittoria dei fuorilegge
+    } else if(nSceriffi == 0 && nFuorilegge > 0) {
+        *ruoloVincitore = FUORILEGGE;
+    // terza verifica: vittoria dei rinnegati
+    } else if(nSceriffi == 0 && nFuorilegge == 0 && nVice == 0 && nPlayer == 0 && nRinnegati > 0) {
+        *ruoloVincitore = RINNEGATO;
+    } else {
+        *ruoloVincitore = -1; // dato che la partita non è terminata, il ruolo vincitore viene settato all'intero "-1"
+    }
+
+    return *ruoloVincitore != -1; // restituisco vero o falso a seconda che sia stato determinato o meno un vincitore
 }
 
 /**
