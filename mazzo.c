@@ -90,19 +90,42 @@ void mischiaMazzo(Mazzo* mazzo) {
  * Restituisce un puntatore a un array contenente le carte pescate dal mazzo di pesca.
  *
  * @param mazzoPesca Puntatore al mazzo di pesca, da cui pescare.
+ * @param mazzoScarti Puntatore al mazzo di scarti.
  * @param numeroCarteDaPescare Il numero di carte da pescare.
  * @return Puntatore all'array contenente le carte pescate, di dimensione 'numeroCarteDaPescare'.
  */
-Carta* pescaCimaMazzo(Mazzo* mazzoPesca, int numeroCarteDaPescare) {
+Carta *pescaCimaMazzo(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int numeroCarteDaPescare) {
     // TODO: cosa fare se finiscono le carte del mazzoPesca?
-    int i;
-    Carta* cartePescate = NULL;
+    int i, carteRimanenti;
+    Carta *cartePescate = NULL, *ultimeCarte = NULL, *primeCarte = NULL;
 
     // alloco dinamicamente un array che contiene le carte che saranno pescate dal 'mazzoPesca'
     cartePescate = (Carta*) calloc(numeroCarteDaPescare, sizeof(Carta));
     if(cartePescate == NULL) {
         printf("Errore: impossibile allocare dinamicamente il mazzoPesca di carte scartato. Arresto.");
         exit(-1); // TODO: utils
+    }
+
+    // se le carte da pescare sono maggiori del numero di carte del mazzo, allora si pescano le rimanenti,
+    // si riempie il mazzo di pesca con il mazzo degli scarti (rimischiato) e si pescano le carte mancanti
+    if(numeroCarteDaPescare > mazzoPesca->numeroCarte) {
+        printf("\nIl mazzo di pesca è vuoto! Rigenerazione dal mazzo di scarti in corso...");
+        ultimeCarte = pescaCimaMazzo(mazzoPesca, mazzoScarti, mazzoPesca->numeroCarte);
+        carteRimanenti = numeroCarteDaPescare - mazzoPesca->numeroCarte;
+
+        mazzoPesca->carte = mazzoScarti->carte;
+        mischiaMazzo(mazzoPesca);
+
+        mazzoScarti->numeroCarte = 0;
+        mazzoScarti->carte = (Carta*) calloc(sizeof(Carta), 0);
+
+        primeCarte = pescaCimaMazzo(mazzoPesca, mazzoScarti, carteRimanenti);
+        for(i = 0; i < numeroCarteDaPescare - carteRimanenti; i++) {
+            cartePescate[i] = ultimeCarte[i];
+        }
+        for(i = numeroCarteDaPescare - carteRimanenti; i < numeroCarteDaPescare; i++) {
+            cartePescate[i] = primeCarte[i - carteRimanenti];
+        }
     }
 
     // inserisco le carte pescate in un array
@@ -137,7 +160,7 @@ Carta* pescaCimaMazzo(Mazzo* mazzoPesca, int numeroCarteDaPescare) {
 Carta *estraiCarte(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int numeroCarteDaEstrarre) {
     int i;
     // pesco le carte dalla cima del mazzo
-    Carta* cartePescate = pescaCimaMazzo(mazzoPesca, numeroCarteDaEstrarre);
+    Carta* cartePescate = pescaCimaMazzo(mazzoPesca, NULL, numeroCarteDaEstrarre);
 
     // aggiungo automaticamente al mazzo di scarti
     for(i = 0; i < numeroCarteDaEstrarre; i++) {

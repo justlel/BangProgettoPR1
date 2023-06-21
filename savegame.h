@@ -27,8 +27,8 @@ typedef struct {
     Mazzo mazzoPesca;
     Mazzo mazzoScarti;
     int prossimoGiocatore;
-    char nomeSalvataggio[SAVEGAME_NAME_LEN + 1];
+    char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]; // TODO: il nome del salvataggio deve essere aggiunto anche nel file binario?
 } Salvataggio;
 
 Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]);
-void scriviSalvataggio(Salvataggio salvataggio);
+void scriviSalvataggio(Salvataggio salvataggio, char nomeSalvataggio[SAVEGAME_NAME_LEN]);

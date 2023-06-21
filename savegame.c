@@ -8,6 +8,8 @@
  * @return Una struttura contenente il salvataggio caricato.
  */
 Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
+    // numero di byte letti per ogni operazione
+    size_t read, readPlayer, readMano, readGioco;
     // struct salvataggio e file da aprire per leggere i suoi campi
     Salvataggio salvataggio;
     FILE* salvataggioFile = NULL;
@@ -18,11 +20,7 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
         exit(-1);
     }
 
-    // inserimento nel salvataggio del nome del file
-    strcpy(salvataggio.nomeSalvataggio, nomeSalvataggio);
-
     // lettura del file di salvataggio
-    int read, readPlayer, readMano, readGioco;
     // numero di giocatori
     read = fread(&salvataggio.nGiocatori, sizeof(int), 1, salvataggioFile);
     if(read != 1) {
@@ -59,10 +57,63 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
         printf("\nErrore durante la lettura del file di salvataggio '%s': non è stato fornito il mazzo di scarti.", nomeSalvataggio);
         exit(-1);
     }
+
+    // aggiunta del nome del salvataggio
+    strcpy(salvataggio.nomeSalvataggio, nomeSalvataggio);
+
+    // chiusura del file
+    fclose(salvataggioFile);
+
     // restituisci la struct del salvataggio letto
     return salvataggio;
 }
 
 void scriviSalvataggio(Salvataggio salvataggio, char nomeSalvataggio[SAVEGAME_NAME_LEN]) {
+    // numero di byte scritti per ogni operazione
+    size_t write, writePlayer, writeMano, writeGioco;
+    // file da aprire per la scrittura
+    FILE* salvataggioFile = NULL;
 
+    salvataggioFile = fopen(strcpy(SAVEGAME_DIR, nomeSalvataggio), "wb");
+    if(salvataggioFile == NULL) {
+        printf("\nErrore durante la scrittura del file di salvataggio.");
+        exit(-1);
+    }
+    // scrittura del numero di giocatori
+    write = fwrite(&salvataggio.nGiocatori, sizeof(int), 1, salvataggioFile);
+    if(write != 1) {
+        printf("\nErrore durante la scrittura del file di salvataggio: impossibile scrivere il numero di player.");
+        exit(-1);
+    }
+    // scrittura degli nGiocatori
+    for(int i = 0; i < salvataggio.nGiocatori; i++) {
+        writePlayer = fwrite(&salvataggio.giocatori[i], sizeof(Giocatore), 1, salvataggioFile);
+        writeMano = fwrite(&salvataggio.giocatori[i].carteMano, sizeof(Mazzo), 1, salvataggioFile);
+        writeGioco = fwrite(&salvataggio.giocatori[i].carteGioco, sizeof(Mazzo), 1, salvataggioFile);
+        if(writePlayer != 1 || writeMano != 1 || writeGioco != 1) {
+            printf("\nErrore durante la scrittura del file di salvataggio.");
+            exit(-1);
+        }
+    }
+    // scrittura del prossimo giocatore
+    write = fwrite(&salvataggio.prossimoGiocatore, sizeof(int), 1, salvataggioFile);
+    if(write != 1) {
+        printf("\nErrore durante la scrittura del file di salvataggio: impossibile scrivere la posizione del prossimo giocatore.");
+        exit(-1);
+    }
+    // scrittura del mazzo di pesca
+    write = fwrite(&salvataggio.mazzoPesca, sizeof(Mazzo), 1, salvataggioFile);
+    if(write != 1) {
+        printf("\nErrore durante la scrittura del file di salvataggio: impossibile scrivere il mazzo di pesca.");
+        exit(-1);
+    }
+    // scrittura del mazzo di scarti
+    write = fwrite(&salvataggio.mazzoScarti, sizeof(Mazzo), 1, salvataggioFile);
+    if(write != 1) {
+        printf("\nErrore durante la scrittura del file di salvataggio: impossibile scrivere il mazzo di scarti.");
+        exit(-1);
+    }
+
+    // chiusura del file
+    fclose(salvataggioFile);
 }

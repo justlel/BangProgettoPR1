@@ -57,5 +57,6 @@ bool verificaCarteInGioco(Salvataggio partita);
 
 void avviaPartita(Salvataggio partita);
 bool partitaTerminata(Salvataggio partita, Ruoli* ruoloVincitore);
+void chiudiPartita(Ruoli ruoloVincitore);
 
 void chiudiGioco();

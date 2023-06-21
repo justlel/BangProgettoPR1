@@ -22,6 +22,7 @@
 #define GITTATA_SCHOFIELD 2
 #define GITTATA_WINCHESTER 5
 #define GITTATA_VOLCANIC 1
+#define GITTATA_COLT 1
 
 /**
  * Enumerazione contenente i tipi che possono essere assegnati ad una carta.
