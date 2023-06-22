@@ -5,6 +5,7 @@
 #include <string.h>
 #include "mazzo.h"
 #include "savegame.h"
+#include "utils.h"
 
 
 // -------- MACRO RELATIVE ALLE IMPOSTAZIONI DELLA PARTITA --------
@@ -51,7 +52,7 @@ Salvataggio creaPartita();
 void assegnaRuoli(Giocatore* giocatori, int nGiocatori);
 
 // TODO: spostarlo
-void distribuisciCartePartenza(Mazzo* mazzo, Giocatore* giocatori, int nGiocatori);
+void distribuisciCartePartenza(Mazzo *mazzoPesca, Mazzo *mazzoScarti, Giocatore *giocatori, int nGiocatori);
 
 bool verificaCarteInGioco(Salvataggio partita);
 

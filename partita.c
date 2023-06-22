@@ -51,8 +51,11 @@ void avvioGioco() {
  * @return La partita generata dalle informazioni fornite.
  */
 Salvataggio creaPartita() {
+    int i, j;
     // salvataggio da restituire
     Salvataggio partita;
+    // boolean di appoggio per verificare che un nickname sia valido
+    bool verificaNome = true;
 
     printf("\nBene, iniziamo allora! Bang! è un gioco multiplayer, a cui è possibile "
            "giocare in compagnia da un minimo di %d a un massimo di %d persone.\n"
@@ -70,21 +73,34 @@ Salvataggio creaPartita() {
     // allocazione dinamica di un array contenente le strutture dei giocatori partecipanti
     Giocatore* giocatori = NULL;
     giocatori = (Giocatore*) calloc(nGiocatori, sizeof(Giocatore));
-    // TODO: eventualmente, mettere questo codice di controllo in un'altra funzione
+
     // verifica dell'allocazione dinamica
-    if(giocatori == NULL) {
-        printf("\nErrore: allocazione dinamica dell'array dei giocatori fallito, arresto.");
-        exit(-1);
-    }
+    assertPuntatoreNonNull(giocatori, "\nErrore: allocazione dinamica dell'array dei giocatori fallito, arresto.");
 
     // richiesta all'utente dei nickname dei giocatori
     printf("Perfetto, dimmi un po' di più sui partecipanti!\n"
            "Cominciamo dai loro nomi: inserisci il nome di ogni giocatore, tenendo a mente che\n"
            "non possono contenere spazi ed hanno una lunghezza massima di %d caratteri.", NOME_UTENTE_LEN);
-    // TODO: Fare una verifica che impedisca di mettere due nomi uguali
-    for(int i = 0; i < nGiocatori; i++) {
-        printf("\nGiocatore %d: ", i+1);
-        scanf(" %49s", giocatori[i].nomeUtente);
+    for(i = 0; i < nGiocatori; i++) {
+        do {
+            printf("\nGiocatore %d: ", i+1);
+            scanf(" %49s", giocatori[i].nomeUtente);
+
+            // verifico che il nome non sia vuoto
+            if(strcmp(giocatori[i].nomeUtente, "") == 0) {
+                verificaNome = false;
+                printf("\nInserisci un nickname!");
+            }
+
+            // verifica che il nome non sia già stato inserito
+            for(j = 0; j <= i; j++) {
+                // il nome è già stato inserito!
+                if(strcmp(giocatori[j].nomeUtente, giocatori[i].nomeUtente) == 0) {
+                    verificaNome = false;
+                    printf("\nQuesto nome è già stato inserito! Riprova.");
+                }
+            }
+        } while (!verificaNome);
     }
 
     // assegnazione dei ruoli dei giocatori
@@ -98,8 +114,15 @@ Salvataggio creaPartita() {
     printf("\nMazzo caricato! Adesso distribuirò le carte dalla cima del mazzoPesca di pesca. Vi ricordo "
            "che ad ogni giocatore spetta un numero di carte pari al numero dei suoi punti vita di partenza");
 
+    // creazione di un mazzo vuoto che contiene le carte scartate
+    Mazzo mazzoScarti = {MAZZO_SCARTO, 0, NULL};
+
     // distribuzione delle carte dal mazzoPesca ai giocatori
-    distribuisciCartePartenza(&mazzoPesca, giocatori, nGiocatori);
+    distribuisciCartePartenza(&mazzoPesca, &mazzoScarti, giocatori, nGiocatori);
+
+    // inserimento dei mazzi nelle info della partita
+    partita.mazzoPesca = mazzoPesca;
+    partita.mazzoScarti = mazzoScarti;
 
     // inserimento dei giocatori nelle info della partita
     partita.giocatori = giocatori;
@@ -107,13 +130,6 @@ Salvataggio creaPartita() {
     partita.prossimoGiocatore = 0;
     while(giocatori[partita.prossimoGiocatore].ruoloAssegnato != SCERIFFO && partita.prossimoGiocatore < nGiocatori)
         partita.prossimoGiocatore++;
-
-    // creazione di un mazzo vuoto che contiene le carte scartate
-    Mazzo mazzoScarti = {MAZZO_SCARTO, 0, NULL};
-
-    // inserimento dei mazzi nelle info della partita
-    partita.mazzoPesca = mazzoPesca;
-    partita.mazzoScarti = mazzoScarti;
 
     // richiesta all'utente di un nome che identifichi il file di salvataggio
     printf("Ci siamo quasi! Come ultima cosa, vorrei che mi dicessi un nome per il file di salvataggio\n"
@@ -136,7 +152,7 @@ void avviaPartita(Salvataggio partita) {
     bool bangGiocato, cartaGiocata = false;
 
     // variabili di tipo int di appoggio per la selezioni delle carte da giocare e delle opzioni dei prompt durante il turno
-    int i, promptTurnoScelta, posizioneCartaSelezionata;
+    int promptTurnoScelta, posizioneCartaSelezionata;
 
     // variabili di tipo char di appoggio per la selezione delle opzioni nei prompt durante il turno
     char ruoloGiocatore[NOME_RUOLO_LEN_MAX + 1], tmpChoice;
@@ -154,23 +170,20 @@ void avviaPartita(Salvataggio partita) {
 
     // allocazione dinamica del puntatore "ruoloVincitore"
     ruoloVincitore = (Ruoli*) malloc(sizeof(Ruoli));
-    if(ruoloVincitore == NULL) {
-        printf("\nErrore: impossibile allocare memoria dinamicamente.");
-        exit(0);
-    }
+    assertPuntatoreNonNull(ruoloVincitore, "\nErrore: impossibile allocare memoria dinamicamente.");
 
     // scrittura del file di salvataggio
     scriviSalvataggio(partita, partita.nomeSalvataggio);
 
     // inizio della logica del turno
     while(!partitaTerminata(partita, ruoloVincitore)) { // verifico che la partita non sia terminata
-        // prendo il prossimo giocatore
+        // salvo il prossimo giocatore
         giocatore = &partita.giocatori[partita.prossimoGiocatore];
 
         printf("------ TURNO n° %d ------", partita.prossimoGiocatore + 1);
         
         prendiNomeRuolo(giocatore->ruoloAssegnato, ruoloGiocatore);
-        printf("\n%s, tocca a te giocare! Il tuo ruolo è '%s'", giocatore->nomeUtente, ruoloGiocatore);
+        printf("\n%s, tocca a te giocare! Il tuo ruolo è '%s'.", giocatore->nomeUtente, ruoloGiocatore);
 
         // calcolo della gittata del giocatore
         giocatore->gittata = calcolaGittata(giocatore);
@@ -306,7 +319,6 @@ void avviaPartita(Salvataggio partita) {
                         if (tmpChoice == PROMPT_CONFERMA) {
                             // scrittura del salvataggio
                             scriviSalvataggio(partita, partita.nomeSalvataggio);
-
                             chiudiGioco();
                         }
                 }
@@ -424,6 +436,7 @@ bool partitaTerminata(Salvataggio partita, Ruoli* ruoloVincitore) {
     return *ruoloVincitore != -1; // restituisco vero o falso a seconda che sia stato determinato o meno un vincitore
 }
 
+// TODO: spostare nel file dei salvataggi
 /**
  * Funzione che richiede all'utente le informazioni relative a un salvataggio da caricare,
  * restituendo poi una struttura "Salvataggio" con le informazioni lette dal file "savegame.bin" relativo.
@@ -432,44 +445,46 @@ bool partitaTerminata(Salvataggio partita, Ruoli* ruoloVincitore) {
  * @return Il salvataggio caricato dal file.
  */
 Salvataggio caricaPartita() {
+    // variabili di supporto utilizzate nella lettura del file contenente i nomi dei salvataggi
+    int read, nSalvataggi = 0, toLoad;
     // nome del salvataggio da caricare
     char nomeSalvataggio[SAVEGAME_NAME_LEN + 1];
+    // array di puntatori allocato dinamicamente. se esiste un file con i nomi dei salvataggi, questo li contiene tutti
+    char** salvataggi = NULL;
+    // puntatore al file che, se esiste, contiene i nomi di tutti i salvataggi disponibili
+    FILE* savegamesFile = NULL;
 
     // verifico l'esistenza del file con la lista dei salvataggi
     #ifdef SAVEGAME_LIST_FILE
-        FILE* savegamesFile = NULL;
+        // apertura del file e verifica
         savegamesFile = fopen(strcat(SAVEGAME_DIR, SAVEGAME_LIST_FILE), "r");
-        // TODO: nel caso spostare queste funzioni in un file 'utils'
-        if(savegamesFile == NULL) {
-            printf("\nImpossibile aprire il file desiderato.");
-            exit(-1);
-        }
+        assertPuntatoreNonNull(savegamesFile, "\nImpossibile aprire il file contenente la lista dei salvataggi.");
 
-        char** salvataggi = NULL;
+        // dichiarazione dinamica dell'array di stringhe con i nomi dei salvataggi e verifica
         salvataggi = (char**) calloc(1, sizeof(char*));
-        if(salvataggi == NULL) {
-            printf("\nImpossibile allocare dinamicamente memoria."); // TODO: nel caso spostare queste funzioni in un file 'utils'
-            exit(-1);
-        }
+        assertPuntatoreNonNull(salvataggi, "\nImpossibile allocare dinamicamente memoria.");
+
         // lettura del file contenente i salvataggi
-        int read, nSalvataggi = 0;
         do {
+            // allocazione dinamica della stringa con il nome del salvataggio corrente e verifica
             salvataggi[nSalvataggi] = (char*) calloc(SAVEGAME_NAME_LEN, sizeof(char));
-            if(salvataggi[nSalvataggi] == NULL) {
-                printf("\nImpossibile allocare dinamicamente memoria."); // TODO: nel caso spostare queste funzioni in un file 'utils'
-                exit(-1);
-            }
+            assertPuntatoreNonNull(salvataggi[nSalvataggi], "\nImpossibile allocare dinamicamente memoria.");
+
+            // lettura della riga, che contiene il nome del file
             read = fscanf(savegamesFile, "%s\n", salvataggi[nSalvataggi]);
-            nSalvataggi++;
+
+            // se è stato letto qualcosa, incremento il numero di salvataggi disponibili
+            if(read == 1)
+                nSalvataggi++;
         } while(read == 1);
 
+        // stampo a schermo i salvataggi disponibili
         printf("\nLista dei salvataggi rinvenuta dal file '%s':", SAVEGAME_LIST_FILE);
         for(int i = 0; i < nSalvataggi; i++) {
             printf("\n%d) %s", i+1, salvataggi[i]);
         }
 
         // prompt per permettere all'utente di scegliere il salvataggio da caricare
-        int toLoad;
         printf("\nInserisci il numero corrispondente al salvataggio da caricare:\n"
                "?) ");
         do {
@@ -478,9 +493,10 @@ Salvataggio caricaPartita() {
                 printf("\nInserisci un numero tra quelli nella lista:\n"
                        "?)");
         } while(toLoad < 1 || toLoad > nSalvataggi);
-        strcpy(nomeSalvataggio, salvataggi[toLoad]);
+        strcpy(nomeSalvataggio, salvataggi[toLoad - 1]);
         free(salvataggi); // libero la memoria non necessaria
-    #else // il file con la lista non è stato definito: il nome deve essere inserito a mano
+    // il file con la lista non è stato definito: il nome deve essere inserito a mano
+    #else
         printf("\nSe vuoi caricare un salvataggio, inserisci il nome del file in cui è stato scritto\n"
                "?) ");
         do {
@@ -490,6 +506,7 @@ Salvataggio caricaPartita() {
                        "?) ");
         } while(strcmp(nomeSalvataggio, "") == 0);
     #endif
+
     // conferma del salvataggio scelto
     printf("\nHai selezionato il salvataggio '%s'. Desideri caricarlo?\n"
            "%c/%c", nomeSalvataggio, PROMPT_CONFERMA, PROMPT_RIFIUTA);
@@ -524,6 +541,9 @@ Salvataggio caricaPartita() {
  * @param nGiocatori Il numero totale di giocatori.
  */
 void assegnaRuoli(Giocatore giocatori[], int nGiocatori) {
+    int i;
+    // intero generato randomicamente, che indica un ruolo (da 0 a 3)
+    int ruoloGenerato;
     // definizione dell'array contenente i ruoli dei giocatori
     int ruoliGiocatori[ROLES_NUMBER];
 
@@ -551,6 +571,7 @@ void assegnaRuoli(Giocatore giocatori[], int nGiocatori) {
             break;
         default:
             printf("\nErrore: numero di giocatori non riconosciuto, impossibile assegnare i ruoli. Arresto.");
+            chiudiGioco();
     }
 
     // stampa a schermo della distribuzione dei ruoli
@@ -561,14 +582,10 @@ void assegnaRuoli(Giocatore giocatori[], int nGiocatori) {
            "Vicesceriffi: %d\n",
            nGiocatori, ruoliGiocatori[SCERIFFO], ruoliGiocatori[RINNEGATO], ruoliGiocatori[FUORILEGGE], ruoliGiocatori[VICESCERIFFO]);
 
-    // condizione booleana che, se verificata, determina la fine del processo di assegnazione dei ruoli
-    bool fineAssegnazione;
-
     // iterazione sui giocatori
-    for(int i = 0; i < nGiocatori; i++) {
-        int ruoloGenerato; // intero generato randomicamente, che indica un ruolo
+    for(i = 0; i < nGiocatori; i++) {
         do {
-            // TODO: attenzione: se si cambiano i valori dell'enum "Ruoli", la generazione va a puttane, ricontrolla uwu
+            // dato che i valori dei ruoli vanno sempre da 0 a 3, la generazione deve essere solo per questi tre valori
             ruoloGenerato = rand() % 4;
             // se ruoliGiocatori[ruoloGenerato] > 0, ci sono ancora dei "posti liberi" per assegnare quel ruolo
             if(ruoliGiocatori[ruoloGenerato] > 0) {
@@ -584,10 +601,8 @@ void assegnaRuoli(Giocatore giocatori[], int nGiocatori) {
                     giocatori[i].puntiVita = PUNTI_VITA_GENERICO;
                 }
             }
-            // TODO: rivedere, non mi piace
-            // validazione della condizione di stop del loop
-            fineAssegnazione = ruoliGiocatori[0] == 0 && ruoliGiocatori[1] == 0 && ruoliGiocatori[2] == 0 && ruoliGiocatori[3] == 0;
-        } while (!fineAssegnazione && ruoliGiocatori[ruoloGenerato] <= 0); // continua a generare finché non trovo un ruolo da assegnare o il loop non è finito
+            // TODO: forse può essere più efficiente?
+        } while (ruoliGiocatori[ruoloGenerato] <= 0); // continua a generare finché non trovo un ruolo da assegnare
     }
 }
 
@@ -598,23 +613,22 @@ void assegnaRuoli(Giocatore giocatori[], int nGiocatori) {
  * e il campo "carteMano" della struttura di ogni giocatore, allocata dinamicamente per ognuno di essi.
  * Se l'allocazione dinamica del campo fallisce, il programma si arresta.
  *
- * @param mazzo Il mazzo da cui prendere le carte da distribuire
+ * @param mazzoPesca Puntatore al mazzo di pesca da cui prendere le carte da distribuire
+ * @param mazzoScarti Puntatore al mazzo delle carte degli scarti.
  * @param giocatori I giocatori a cui distribuire le carte
  * @param nGiocatori Il numero di giocatori a cui distribuire le carte
  */
-void distribuisciCartePartenza(Mazzo* mazzo, Giocatore* giocatori, int nGiocatori) {
+void distribuisciCartePartenza(Mazzo *mazzoPesca, Mazzo *mazzoScarti, Giocatore *giocatori, int nGiocatori) {
     // iterazione sui giocatori
     for(int i = 0; i < nGiocatori; i++) {
         // allocazione dinamica del campo contenente le carte di ogni giocatore
         giocatori[i].carteMano.carte = (Carta*) calloc(giocatori->puntiVita, sizeof(Carta));
-        // TODO: nel caso, raccogliere in un altro file
+
         // verifica dell'allocazione dinamica
-        if(giocatori[i].carteMano.carte == NULL) {
-            printf("Errore: impossibile allocare dinamicamente il mazzo di carte del giocatore. Arresto.");
-            exit(-1);
-        }
+        assertPuntatoreNonNull(giocatori[i].carteMano.carte, "\nErrore: impossibile allocare dinamicamente il mazzo di carte del giocatore. Arresto.");
+
         // a ogni giocatore vengono assegnate le carte dalla cima del mazzo, per un numero totale pari ai suoi punti vita
-        giocatori[i].carteMano.carte = pescaCimaMazzo(mazzo, NULL, giocatori[i].puntiVita); // TODO: da testare
+        giocatori[i].carteMano.carte = pescaCimaMazzo(mazzoPesca, mazzoScarti, giocatori[i].puntiVita);
     }
 }
 

@@ -74,11 +74,10 @@ void scriviSalvataggio(Salvataggio salvataggio, char nomeSalvataggio[SAVEGAME_NA
     // file da aprire per la scrittura
     FILE* salvataggioFile = NULL;
 
+    // apertura del file e verifica
     salvataggioFile = fopen(strcpy(SAVEGAME_DIR, nomeSalvataggio), "wb");
-    if(salvataggioFile == NULL) {
-        printf("\nErrore durante la scrittura del file di salvataggio.");
-        exit(-1);
-    }
+    assertPuntatoreNonNull(salvataggioFile, "\nErrore durante la scrittura del file di salvataggio.");
+
     // scrittura del numero di giocatori
     write = fwrite(&salvataggio.nGiocatori, sizeof(int), 1, salvataggioFile);
     if(write != 1) {

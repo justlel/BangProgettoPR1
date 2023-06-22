@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "carta.h"
+#include "utils.h"
 
 /**
  * Enumerazione contenente le varie tipologie che possono essere assegnate a un mazzo.
