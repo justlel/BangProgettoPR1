@@ -198,26 +198,6 @@ bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGi
             //Carta* armaInUso = prendiArmaGiocatore(giocatore);
 
             printf("\nLa carta 'Bang!' ti permette di infliggere danni a un giocatore.");
-            // stampa informazioni della gittata
-            /*
-            printf("\nAl momento, la tua gittata totale è data da questi fattori:");
-            if (strcmp(armaInUso.nomeCarta, "Carabina") == 0) {
-                printf("\nArma: CARABINA (+%d gittata)", GITTATA_CARABINA);
-                //gittata += GITTATA_CARABINA;
-            } else if (strcmp(armaInUso.nomeCarta, "Remington") == 0) {
-                printf("\nArma: REMINGTON (+%d gittata)", GITTATA_REMINGTON);
-                //gittata += GITTATA_REMINGTON;
-            } else if (strcmp(armaInUso.nomeCarta, "Schofield") == 0) {
-                printf("\nArma: SCHOFIELD (+%d gittata)", GITTATA_SCHOFIELD);
-                //gittata += GITTATA_SCHOFIELD;
-            } else if (strcmp(armaInUso.nomeCarta, "Winchester") == 0) {
-                printf("\nArma: WINCHESTER (+%d gittata)", GITTATA_WINCHESTER);
-                //gittata += GITTATA_WINCHESTER;
-            } else if (strcmp(armaInUso.nomeCarta, "Volcanic") == 0) {
-                printf("\nArma: VOLCANIC (+%d gittata)", GITTATA_VOLCANIC);
-                //gittata += GITTATA_VOLCANIC;
-            }
-            */ // codice ridondante
 
             printf("\nGittata totale: %d", giocatore->gittata);
 
@@ -293,7 +273,7 @@ bool giocaCarta(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGi
                        nomeGiocatoreScelto);
                 // TODO: pulire lo schermo
                 printf("\nPassa lo schermo a %s per permettergli di scegliere se giocare la carta."
-                       "Premi 'Invio' qualsiasi per continuare.", giocatoreScelto->nomeUtente);
+                       "Premi 'Invio' per continuare.", giocatoreScelto->nomeUtente);
                 getchar(); // aspetto che il giocatore sia sullo schemro
                 printf("\n%s ha giocato una carta 'Bang!' contro di te: desideri scartare una carta 'Mancato!' ed evitare l'attacco?\n"
                        "%c/%c)", giocatore->nomeUtente, PROMPT_CONFERMA, PROMPT_RIFIUTA);
@@ -1115,4 +1095,8 @@ void rimuoviPuntiVita(Giocatore *giocatoreFerito, Giocatore *giocatoreAttaccante
     } else {
         giocatoreFerito->puntiVita -= puntiVitaRimossi;
     }
+}
+
+bool possiedeCartaInGioco(Giocatore giocatore, char nomeCarta[NOME_CARTA_LEN + 1]) {
+    return cercaCartaMazzoPerNome(giocatore.carteGioco, nomeCarta) != -1;
 }

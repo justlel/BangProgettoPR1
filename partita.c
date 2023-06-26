@@ -51,7 +51,7 @@ void avvioGioco() {
  * @return La partita generata dalle informazioni fornite.
  */
 Salvataggio creaPartita() {
-    int i, j;
+    int i = 0, j = 0;
     // salvataggio da restituire
     Salvataggio partita;
     // boolean di appoggio per verificare che un nickname sia valido
@@ -93,7 +93,7 @@ Salvataggio creaPartita() {
             }
 
             // verifica che il nome non sia già stato inserito
-            for(j = 0; j <= i; j++) {
+            for(j = i-1; j <= 0; j--) {
                 // il nome è già stato inserito!
                 if(strcmp(giocatori[j].nomeUtente, giocatori[i].nomeUtente) == 0) {
                     verificaNome = false;
@@ -135,10 +135,14 @@ Salvataggio creaPartita() {
     printf("Ci siamo quasi! Come ultima cosa, vorrei che mi dicessi un nome per il file di salvataggio\n"
            "in cui sarà memorizzata questa partita (max. %d caratteri)", SAVEGAME_NAME_LEN);
     printf("?) ");
-    scanf("%16s", partita.nomeSalvataggio); // TODO: forse si può fare una funzione per generare un format da un numero
+    scanf("%16s", partita.nomeSalvataggio);
 
     // scrittura del nuovo salvataggio
     scriviSalvataggio(partita, partita.nomeSalvataggio);
+
+    #ifdef SAVEGAME_LIST_FILE
+
+    #endif
 
     printf("\nBene, è tutto pronto! Che la partita abbia inizio, e buona fortuna ai partecipanti!");
 
@@ -639,6 +643,9 @@ void chiudiPartita(Ruoli ruoloVincitore) {
     switch (ruoloVincitore) {
         case SCERIFFO:
             strcpy(nomeRuolo, "Sceriffi");
+            break;
+        case VICESCERIFFO:
+            strcpy(nomeRuolo, "Vicesceriffi");
             break;
         case FUORILEGGE:
             strcpy(nomeRuolo, "Fuorilegge");

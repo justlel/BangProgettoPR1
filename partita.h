@@ -3,7 +3,6 @@
 #include <time.h>
 #include <stdbool.h>
 #include <string.h>
-#include "mazzo.h"
 #include "savegame.h"
 #include "utils.h"
 
