@@ -31,9 +31,9 @@ void mostraCarta(Carta carta);
 void mostraCarteMazzo(Mazzo mazzo);
 
 Carta *pescaCimaMazzo(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int numeroCarteDaPescare);
-Carta *estraiCarte(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int numeroCarteDaEstrarre);
+Carta estraiCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti);
 
-void rimuoviCartaMazzo(Mazzo* mazzo, Carta carta);
+void rimuoviCartaMazzo(Mazzo* mazzo, int posizioneCarta);
 void aggiungiCartaMazzo(Mazzo* mazzo, Carta carta);
 
 int cercaCartaMazzoPerNome(Mazzo mazzo, char nomeCarta[NOME_CARTA_LEN + 1]);

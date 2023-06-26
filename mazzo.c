@@ -164,28 +164,28 @@ Carta *pescaCimaMazzo(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int numeroCarteDaPe
 }
 
 /**
- * Funzione che estrae un numero fornito di carte.
+ * Funzione che estrae una carta da un mazzo.
  * Con il termine 'estrarre' si intende l'azione che prevede la pesca dal mazzo di pesca, e poi lo scarto immediato.
  * Questo significa che le carte estratte vengono restituite dalla funzione, ma non sono utilizzabili perché sono state
  * spostate nel mazzo degli scarti.
  *
  * @param mazzoPesca Puntatore al mazzo di pesca, da cui pescare.
  * @param mazzoScarti Puntatore al mazzo degli scarti, in cui inserire la carta scartata.
- * @param numeroCarteDaEstrarre Il numero di carte da estrarre.
  * @return Un puntatore all'array contenente le carte estratte (NON possono essere date a un giocatore)
  */
-Carta *estraiCarte(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int numeroCarteDaEstrarre) {
-    int i;
-    // pesco le carte dalla cima del mazzo
-    Carta* cartePescate = pescaCimaMazzo(mazzoPesca, NULL, numeroCarteDaEstrarre);
+Carta estraiCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti) {
+    // carta estratta
+    Carta cartaEstratta;
 
-    // aggiungo automaticamente al mazzo di scarti
-    for(i = 0; i < numeroCarteDaEstrarre; i++) {
-        aggiungiCartaMazzo(mazzoScarti, cartePescate[i]);
-    }
+    // prendo l'ultima carta dal mazzo di pesca
+    cartaEstratta = mazzoPesca->carte[mazzoPesca->numeroCarte - 1];
 
-    // restituisco le carte estratte
-    return cartePescate;
+    // sposto la carta dal mazzo di pesca al mazzo degli scarti
+    aggiungiCartaMazzo(mazzoScarti, cartaEstratta);
+    rimuoviCartaMazzo(mazzoPesca, mazzoPesca->numeroCarte - 1);
+
+    // restituisco la carta estratta
+    return cartaEstratta;
 }
 
 /**
@@ -206,23 +206,18 @@ int cercaCartaMazzoPerNome(Mazzo mazzo, char nomeCarta[NOME_CARTA_LEN + 1]) {
     return -1;
 }
 
-void rimuoviCartaMazzo(Mazzo* mazzo, Carta carta) {
+void rimuoviCartaMazzo(Mazzo* mazzo, int posizioneCarta) {
     int i;
     Carta* nuovoMazzo = NULL;
 
     mazzo->numeroCarte--;
+
     nuovoMazzo = (Carta*) calloc(mazzo->numeroCarte, sizeof(Carta));
-    if(nuovoMazzo == NULL) {
-        printf("\nImpossibile allocare dinamicamente memoria."); // TODO: spostare in utils
-        exit(-1);
-    }
+    assertPuntatoreNonNull(nuovoMazzo, "\nImpossibile allocare dinamicamente memoria.");
 
     for(i = 0; i < mazzo->numeroCarte; i++) {
-        if(strcmp(mazzo->carte[i].nomeCarta, carta.nomeCarta) == 0 &&
-                mazzo->carte[i].numeroCarta == carta.numeroCarta &&
-                mazzo->carte[i].semeCarta == carta.semeCarta)
-            continue;
-        nuovoMazzo[i] = mazzo->carte[i];
+        if(i != posizioneCarta)
+            nuovoMazzo[i] = mazzo->carte[i];
     }
 
     free(mazzo->carte);
@@ -232,11 +227,10 @@ void rimuoviCartaMazzo(Mazzo* mazzo, Carta carta) {
 void aggiungiCartaMazzo(Mazzo* mazzo, Carta carta) {
     // allargamento del mazzo di carte per far spazio alla nuova carta
     mazzo->numeroCarte++;
+
+    // allocazione dinamica e verifica
     mazzo->carte = (Carta*) realloc(mazzo->carte, mazzo->numeroCarte);
-    if(mazzo->carte == NULL) {
-        printf("\nErrore: impossibile allocare dinamicamente."); // TODO: 'utils'
-        exit(-1);
-    }
+    assertPuntatoreNonNull(mazzo->carte, "\nErrore: impossibile allocare dinamicamente.");
 
     // aggiunta della nuova carta
     mazzo->carte[mazzo->numeroCarte - 1] = carta;

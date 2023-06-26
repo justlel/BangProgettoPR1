@@ -69,14 +69,16 @@ void mostraDistanze(int nGiocatori, Giocatore giocatori[], int posizioneGiocator
 void mostraCarteInGiocoAltri(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore);
 // FUNZIONI
 bool possiedeCartaInGioco(Giocatore giocatore, char nomeCarta[NOME_CARTA_LEN + 1]);
-bool giocaCarta(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore, Carta carta, Mazzo* mazzoPesca, Mazzo* mazzoScarti);
+
+bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore giocatori[nGiocatori],
+                int posizioneGiocatore, int posizioneCarta);
 bool manoPiena(Giocatore giocatore);
 
-void pescaCarte(Mazzo* mazzoPesca, Giocatore* giocatore, int nCarte);
+void pescaCarte(Mazzo *mazzoPesca, Mazzo *mazzoScarti, Giocatore *giocatore, int nCarte);
 void scartaCarta(Mazzo* mazzoMano, Mazzo* mazzoScarti);
-Carta *estraiCarte(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nCarte);
+Carta estraiCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti);
 
-void aggiungiCartaInGioco(Giocatore* giocatoreCarta, Giocatore* giocatoreBersaglio, Carta carta);
+void aggiungiCartaInGioco(Giocatore* giocatoreCarta, Giocatore* giocatoreBersaglio, int posizioneCarta);
 Carta * prendiArmaGiocatore(Giocatore *giocatore);
 
 // FUNZIONI SUI GIOCATORI
