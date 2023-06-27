@@ -937,6 +937,12 @@ void pescaCarte(Mazzo *mazzoPesca, Mazzo *mazzoScarti, Giocatore *giocatore, int
             aggiungiCartaMazzo(&giocatore->carteMano, mazzoPesca->carte[mazzoPesca->numeroCarte - i - 1]);
             rimuoviCartaMazzo(mazzoPesca, mazzoPesca->numeroCarte - i - 1);
         }
+    } else {
+        // pesco le carte normalmente
+        for(i = 0; i < nCarte; i++) {
+            aggiungiCartaMazzo(&giocatore->carteMano, mazzoPesca->carte[mazzoPesca->numeroCarte - i - 1]);
+            rimuoviCartaMazzo(mazzoPesca, mazzoPesca->numeroCarte - i - 1);
+        }
     }
 }
 

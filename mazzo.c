@@ -208,20 +208,27 @@ int cercaCartaMazzoPerNome(Mazzo mazzo, char nomeCarta[NOME_CARTA_LEN + 1]) {
 
 void rimuoviCartaMazzo(Mazzo* mazzo, int posizioneCarta) {
     int i;
-    Carta* nuovoMazzo = NULL;
+    //Carta* nuovoMazzo = NULL;
 
+    // dimunisco di uno il numero di carte
     mazzo->numeroCarte--;
 
-    nuovoMazzo = (Carta*) calloc(mazzo->numeroCarte, sizeof(Carta));
-    assertPuntatoreNonNull(nuovoMazzo, "\nImpossibile allocare dinamicamente memoria.");
+    //nuovoMazzo = (Carta*) calloc(mazzo->numeroCarte, sizeof(Carta));
+    //assertPuntatoreNonNull(nuovoMazzo, "\nImpossibile allocare dinamicamente memoria.");
 
+    // a partire dalla posizione della carta da rimuovere, sposto tutte le carte indietro di uno
+    for(i = posizioneCarta; i <= mazzo->numeroCarte - 1; i++) {
+        mazzo->carte[i] = mazzo->carte[i+1];
+    }
+    // rialloco la memoria dell'array di carte diminuendo lo spazio di uno
+    mazzo->carte = (Carta*) realloc(mazzo->carte, sizeof(Carta) * mazzo->numeroCarte);
+    assertPuntatoreNonNull(mazzo->carte, "\nErrore: la riallocazione dinamica del mazzo di carte dopo la rimozione non è riuscita.");
+    /*
     for(i = 0; i < mazzo->numeroCarte; i++) {
         if(i != posizioneCarta)
             nuovoMazzo[i] = mazzo->carte[i];
     }
-
-    free(mazzo->carte);
-    mazzo->carte = nuovoMazzo; // TODO: Da testare
+    */
 }
 
 void aggiungiCartaMazzo(Mazzo* mazzo, Carta carta) {
