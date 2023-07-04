@@ -51,3 +51,4 @@ typedef struct {
 
 void prendiTipologiaCarta(tipologieCarta tipologiaCarta, char nomeTipologia[TIPOLOGIA_CARTA_LEN + 1]);
 void prendiSemeCarta(semiCarta semeCarta, char nomeSeme[SEME_CARTA_LEN + 1]);
+void svuotaSchermo();

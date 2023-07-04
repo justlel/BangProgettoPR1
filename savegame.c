@@ -31,35 +31,77 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
         printf("\nErrore durante la lettura del file di salvataggio '%s': numero di giocatori non determinato.", nomeSalvataggio);
         exit(-1);
     }
+
+    // alloco il numero dei giocatori nel salvataggio
+    salvataggio.giocatori = (Giocatore*) calloc(salvataggio.nGiocatori, sizeof(Giocatore));
+    assertPuntatoreNonNull(salvataggio.giocatori, "\nImpossibile allocare l'array di giocatori.");
+
     // lettura dei blocchi di giocatori
-    Giocatore giocatoreLetto;
     for(int i = 0; i < salvataggio.nGiocatori; i++) {
-        readPlayer = fread(&giocatoreLetto, sizeof(Giocatore), 1, salvataggioFile);
-        readMano = fread(&giocatoreLetto.carteMano, sizeof(Mazzo), 1, salvataggioFile);
-        readGioco = fread(&giocatoreLetto.carteGioco, sizeof(Mazzo), 1, salvataggioFile);
-        if(readPlayer != 1 || readMano != 1 || readGioco != 1) {
-            printf("\nErrore durante la lettura del file di salvataggio '%s': il giocatore %d ha un numero di informazioni insufficienti.",
-                   nomeSalvataggio, i);
+        readPlayer = fread(&salvataggio.giocatori[i], sizeof(Giocatore), 1, salvataggioFile);
+        if(readPlayer != 1) {
+            printf("\nImpossibile leggere le informazioni del giocatore");
             exit(-1);
         }
+
+        // alloco dinamicamente le altre strutture
+        // lettura carte della mano del giocatore
+        if(salvataggio.giocatori[i].carteMano.numeroCarte > 0) {
+            salvataggio.giocatori[i].carteMano.carte = (Carta *) calloc(salvataggio.giocatori[i].carteMano.numeroCarte, sizeof(Carta));
+            assertPuntatoreNonNull(salvataggio.giocatori[i].carteMano.carte, "\nImpossibile caricare dinamicamente le carte del giocatore.");
+            readMano = fread(&salvataggio.giocatori[i].carteMano.carte, sizeof(Carta), salvataggio.giocatori[i].carteMano.numeroCarte, salvataggioFile);
+            if(readMano != salvataggio.giocatori[i].carteMano.numeroCarte) {
+                printf("\nImpossibile leggere tutte le carte della mano del giocatore.");
+                exit(-1);
+            }
+        }
+        // lettura carte in gioco del giocatore
+        if(salvataggio.giocatori[i].carteGioco.numeroCarte > 0) {
+            salvataggio.giocatori[i].carteGioco.carte = (Carta *) calloc(salvataggio.giocatori[i].carteGioco.numeroCarte, sizeof(Carta));
+            assertPuntatoreNonNull(salvataggio.giocatori[i].carteGioco.carte, "\nImpossibile caricare dinamicamente le carte del giocatore.");
+            readGioco = fread(&salvataggio.giocatori[i].carteGioco.carte, sizeof(Carta), salvataggio.giocatori[i].carteGioco.numeroCarte, salvataggioFile);
+            if(readGioco != salvataggio.giocatori[i].carteGioco.numeroCarte) {
+                printf("\nImpossibile leggere tutte le carte in gioco del giocatore.");
+                exit(-1);
+            }
+        }
     }
+
     // lettura del numero del prossimo giocatore che deve giocare
     read = fread(&salvataggio.prossimoGiocatore, sizeof(int), 1, salvataggioFile);
     if(read != 1) {
         printf("\nErrore durante la lettura del file di salvataggio '%s': non è stato fornito il numero del prossimo giocatore.", nomeSalvataggio);
         exit(-1);
     }
+
     // lettura del mazzo di pesca
     read = fread(&salvataggio.mazzoPesca, sizeof(Mazzo), 1, salvataggioFile);
     if(read != 1) {
         printf("\nErrore durante la lettura del file di salvataggio '%s': non è stato fornito il mazzo di pesca.", nomeSalvataggio);
         exit(-1);
     }
+    // lettura carte del mazzo di pesca
+    if(salvataggio.mazzoPesca.numeroCarte > 0) {
+        read = fread(&salvataggio.mazzoPesca.carte, sizeof(Carta), salvataggio.mazzoPesca.numeroCarte, salvataggioFile);
+        if(read != salvataggio.mazzoPesca.numeroCarte) {
+            printf("\nImpossibile leggere tutte le carte del mazzo di pesca del giocatore.");
+            exit(-1);
+        }
+    }
+
     // lettura del mazzo di scarti
     read = fread(&salvataggio.mazzoScarti, sizeof(Mazzo), 1, salvataggioFile);
     if(read != 1) {
         printf("\nErrore durante la lettura del file di salvataggio '%s': non è stato fornito il mazzo di scarti.", nomeSalvataggio);
         exit(-1);
+    }
+    // lettura carte del mazzo di scarti
+    if(salvataggio.mazzoScarti.numeroCarte > 0) {
+        read = fread(&salvataggio.mazzoScarti.carte, sizeof(Carta), salvataggio.mazzoScarti.numeroCarte, salvataggioFile);
+        if(read != salvataggio.mazzoScarti.numeroCarte) {
+            printf("\nImpossibile leggere tutte le carte del mazzo di scarti del giocatore.");
+            exit(-1);
+        }
     }
 
     // aggiunta del nome del salvataggio
@@ -96,11 +138,23 @@ void scriviSalvataggio(Salvataggio salvataggio, char nomeSalvataggio[SAVEGAME_NA
     // scrittura degli nGiocatori
     for(int i = 0; i < salvataggio.nGiocatori; i++) {
         writePlayer = fwrite(&salvataggio.giocatori[i], sizeof(Giocatore), 1, salvataggioFile);
-        writeMano = fwrite(&salvataggio.giocatori[i].carteMano, sizeof(Mazzo), 1, salvataggioFile);
-        writeGioco = fwrite(&salvataggio.giocatori[i].carteGioco, sizeof(Mazzo), 1, salvataggioFile);
-        if(writePlayer != 1 || writeMano != 1 || writeGioco != 1) {
-            printf("\nErrore durante la scrittura del file di salvataggio.");
+        if(writePlayer != 1) {
+            printf("\nErrore durante la scrittura del giocatore sul file di salvataggio.");
             exit(-1);
+        }
+        if(salvataggio.giocatori[i].carteMano.numeroCarte > 0) {
+            writeMano = fwrite(salvataggio.giocatori[i].carteMano.carte, sizeof(Carta), salvataggio.giocatori[i].carteMano.numeroCarte, salvataggioFile);
+            if(writeMano != salvataggio.giocatori[i].carteMano.numeroCarte) {
+                printf("\nImpossibile scrivere le carte della mano del giocatore su file.");
+                exit(-1);
+            }
+        }
+        if(salvataggio.giocatori[i].carteGioco.numeroCarte > 0) {
+            writeGioco = fwrite(salvataggio.giocatori[i].carteGioco.carte, sizeof(Carta), salvataggio.giocatori[i].carteGioco.numeroCarte, salvataggioFile);
+            if(writeGioco != salvataggio.giocatori[i].carteGioco.numeroCarte) {
+                printf("\nImpossibile scrivere le carte in gioco del giocatore su file.");
+                exit(-1);
+            }
         }
     }
     // scrittura del prossimo giocatore
@@ -115,11 +169,25 @@ void scriviSalvataggio(Salvataggio salvataggio, char nomeSalvataggio[SAVEGAME_NA
         printf("\nErrore durante la scrittura del file di salvataggio: impossibile scrivere il mazzo di pesca.");
         exit(-1);
     }
+    if(salvataggio.mazzoPesca.numeroCarte > 0) {
+        write = fwrite(salvataggio.mazzoPesca.carte, sizeof(Carta), salvataggio.mazzoPesca.numeroCarte, salvataggioFile);
+        if(write != salvataggio.mazzoPesca.numeroCarte) {
+            printf("\nImpossibile scrivere le carte del mazzo di pesca.");
+            exit(-1);
+        }
+    }
     // scrittura del mazzo di scarti
     write = fwrite(&salvataggio.mazzoScarti, sizeof(Mazzo), 1, salvataggioFile);
     if(write != 1) {
         printf("\nErrore durante la scrittura del file di salvataggio: impossibile scrivere il mazzo di scarti.");
         exit(-1);
+    }
+    if(salvataggio.mazzoScarti.numeroCarte > 0) {
+        write = fwrite(salvataggio.mazzoScarti.carte, sizeof(Carta), salvataggio.mazzoScarti.numeroCarte, salvataggioFile);
+        if(write != salvataggio.mazzoScarti.numeroCarte) {
+            printf("\nImpossibile scrivere le carte del mazzo di scarti.");
+            exit(-1);
+        }
     }
 
     // chiusura del file
@@ -139,7 +207,17 @@ bool salvataggioEsistente(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
     // ottengo il nome completo del file
     aggiungiEstensioneSalvataggio(nomeSalvataggio, nomeSalvataggioCompleto);
 
-    FILE* fp = fopen(nomeSalvataggioCompleto, "r");
+    return fileEsistente(nomeSalvataggioCompleto);
+}
+
+/**
+ * Funzione che verifica che un file esista.
+ *
+ * @param nomeFile Il nome del file da verificare.
+ * @return True se il file esiste, False altrimenti.
+ */
+bool fileEsistente(char nomeFile[SAVEGAME_NAME_LEN + SAVEGAME_EXT_LEN + 1]) {
+    FILE* fp = fopen(nomeFile, "r");
     // se fp == NULL, allora il file non esiste. la modalità in lettura non crea il salvataggio
     if(fp) {
         fclose(fp); // è necessario chiudere il file

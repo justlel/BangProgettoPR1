@@ -102,6 +102,10 @@ Salvataggio creaPartita() {
                 }
             }
         } while (!verificaNome);
+
+        // creo i mazzi dei giocatori
+        partita.giocatori[i].carteMano = (Mazzo) {GIOC_MANO, 0, NULL};
+        partita.giocatori[i].carteGioco = (Mazzo) {GIOC_GIOCO, 0, NULL};
     }
 
     // assegnazione dei ruoli dei giocatori
@@ -188,10 +192,11 @@ void avviaPartita(Salvataggio partita) {
 
     // inizio della logica del turno
     while(!partitaTerminata(partita, ruoloVincitore)) { // verifico che la partita non sia terminata
+        svuotaSchermo();
         // salvo il puntatore del giocatore corrente
         giocatore = &partita.giocatori[partita.prossimoGiocatore];
 
-        printf("------ TURNO n° %d ------", partita.prossimoGiocatore + 1);
+        printf("\n\n------ TURNO n° %d ------\n", partita.prossimoGiocatore + 1);
 
         // salvo il nome del ruolo del giocatore.
         prendiNomeRuolo(giocatore->ruoloAssegnato, ruoloGiocatore);
@@ -213,13 +218,14 @@ void avviaPartita(Salvataggio partita) {
                 do {
                     printf("\nScegli una delle seguenti azioni:\n"
                            "%d) Gioca una delle tue carte\n"
+                           "%d) Vedi le tue carte in mano\n"
                            "%d) Vedi le tue carte in gioco\n"
                            "%d) Controlla la tua distanza dagli altri giocatori\n"
                            "%d) Vedi le carte in gioco degli altri giocatori\n"
                            "%d) Passa il turno\n"
                            "%d) Chiudi il gioco\n"
                            "?) ",
-                           PROMPT_TURNO_GIOCA_CARTA, PROMPT_TURNO_VEDI_CARTE_GIOCO, PROMPT_TURNO_VEDI_DISTANZE,
+                           PROMPT_TURNO_GIOCA_CARTA, PROMPT_TURNO_VEDI_CARTE_MANO, PROMPT_TURNO_VEDI_CARTE_GIOCO, PROMPT_TURNO_VEDI_DISTANZE,
                            PROMPT_TURNO_VEDI_CARTE_GIOCO_ALTRI, PROMPT_TURNO_PASSA_TURNO, PROMPT_TURNO_ESCI);
                     scanf("%d", &promptTurnoScelta);
                     ripetizioneCiclo = promptTurnoScelta != PROMPT_TURNO_GIOCA_CARTA &&
@@ -238,20 +244,22 @@ void avviaPartita(Salvataggio partita) {
                 switch (promptTurnoScelta) {
                     // il giocatore ha deciso di giocare una carta
                     case PROMPT_TURNO_GIOCA_CARTA:
-                        ripetizioneCiclo = false;
                         // chiedo al giocatore di scegliere una carta
                         do {
                             // se il ciclo è stato ripetuto, chiedo al giocatore se desidera giocare un'altra carta
                             if(ripetizioneCiclo) {
                                 printf("\nDesideri giocare un'altra carta?\n"
                                        "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
-                                tmpChoice = getchar();
+                                scanf(" %c", &tmpChoice);
                                 // torno al menu principale
                                 if(tmpChoice == PROMPT_RIFIUTA) {
                                     printf("\nTorno al menu principale!");
                                     break;
                                 }
                             }
+
+
+                            ripetizioneCiclo = false;
 
                             printf("\nBene, queste sono le carte nella tua mano!");
                             // mostro le carte nella mano del giocatore
@@ -291,7 +299,7 @@ void avviaPartita(Salvataggio partita) {
                                     ripetizioneCiclo = true;
                                 }
                             } else {
-                                printf("\nInserisci un valore valido!");
+                                printf("\nIl numero inserito non è valido!");
                                 ripetizioneCiclo = true; // il valore è invalido: ripeto la richiesta
                             }
                         } while (ripetizioneCiclo);
@@ -331,7 +339,7 @@ void avviaPartita(Salvataggio partita) {
                     case PROMPT_TURNO_ESCI:
                         printf("\nSei sicuro di voler uscire?\n"
                                "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
-                        tmpChoice = getchar();
+                        scanf(" %c", &tmpChoice);
                         if (tmpChoice == PROMPT_CONFERMA) {
                             // scrittura del salvataggio
                             scriviSalvataggio(partita, partita.nomeSalvataggio);
@@ -504,10 +512,13 @@ Salvataggio caricaPartita() {
     char** salvataggi = NULL;
     // puntatore al file che, se esiste, contiene i nomi di tutti i salvataggi disponibili
     FILE* savegamesFile = NULL;
+    // booleano di supporto per verificare che un salvataggio da caricare esista
+    bool savegameEsistente = true;
+    // char di supporto per confermare il caricamento di un salvataggio
+    char conferma;
 
     // verifico l'esistenza del file con la lista dei salvataggi
-    #ifdef SAVEGAME_LIST_FILE
-        // apertura del file e verifica
+    if(fileEsistente(SAVEGAME_LIST_FILE)) {
         savegamesFile = fopen(SAVEGAME_LIST_FILE, "r");
         assertPuntatoreNonNull(savegamesFile, "\nImpossibile aprire il file contenente la lista dei salvataggi.");
 
@@ -535,36 +546,44 @@ Salvataggio caricaPartita() {
             printf("\n%d) %s", i+1, salvataggi[i]);
         }
 
-        // prompt per permettere all'utente di scegliere il salvataggio da caricare
-        printf("\nInserisci il numero corrispondente al salvataggio da caricare:\n"
-               "?) ");
         do {
+            // prompt per permettere all'utente di scegliere il salvataggio da caricare
+            printf("\nInserisci il numero corrispondente al salvataggio da caricare:\n"
+                   "?) ");
             scanf("%d", &toLoad);
-            if(toLoad < 1 || toLoad > nSalvataggi)
-                printf("\nInserisci un numero tra quelli nella lista:\n"
-                       "?)");
-        } while(toLoad < 1 || toLoad > nSalvataggi);
+            if(toLoad < 1 || toLoad > nSalvataggi) {
+                printf("\nInserisci un numero tra quelli nella lista.");
+            } else {
+                // verifico che il salvataggio scelto esista
+                savegameEsistente = salvataggioEsistente(salvataggi[toLoad - 1]);
+                if(!savegameEsistente) {
+                    printf("\nImpossibile caricare il salvataggio scelto.");
+                }
+            }
+        } while((toLoad < 1 || toLoad > nSalvataggi) || !savegameEsistente);
         strcpy(nomeSalvataggio, salvataggi[toLoad - 1]);
         free(salvataggi); // libero la memoria non necessaria
-    // il file con la lista non è stato definito: il nome deve essere inserito a mano
-    #else
-        printf("\nSe vuoi caricare un salvataggio, inserisci il nome del file in cui è stato scritto\n"
-               "?) ");
+    } else {
         do {
-            scanf("%16s", nomeSalvataggio);
-            if(strcmp(nomeSalvataggio, "") == 0)
-                printf("\nInserisci un nome valido\n"
-                       "?) ");
-        } while(strcmp(nomeSalvataggio, "") == 0);
-    #endif
+            printf("\nSe vuoi caricare un salvataggio, inserisci il nome del file in cui è stato scritto\n"
+                   "?) ");
+            scanf(" %16s", nomeSalvataggio);
+            if(strcmp(nomeSalvataggio, "") == 0) {
+                printf("\nInserisci un nome valido");
+            } else {
+                savegameEsistente = salvataggioEsistente(nomeSalvataggio);
+                if(!savegameEsistente) {
+                    printf("\nImpossibile caricare il salvataggio scelto.");
+                }
+            }
+        } while(strcmp(nomeSalvataggio, "") == 0 || !savegameEsistente);
+    }
 
     // conferma del salvataggio scelto
-    printf("\nHai selezionato il salvataggio '%s'. Desideri caricarlo?\n"
-           "%c/%c", nomeSalvataggio, PROMPT_CONFERMA, PROMPT_RIFIUTA);
-    char conferma;
-
     do {
-        conferma = getchar();
+        printf("\nHai selezionato il salvataggio '%s'. Desideri caricarlo?\n"
+               "%c/%c) ", nomeSalvataggio, PROMPT_CONFERMA, PROMPT_RIFIUTA);
+        scanf(" %c", &conferma);
         if(conferma != PROMPT_CONFERMA && conferma != PROMPT_RIFIUTA)
             printf("\nInserisci una delle due opzioni\n"
                    "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);

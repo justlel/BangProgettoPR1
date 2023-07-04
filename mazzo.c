@@ -236,7 +236,11 @@ void aggiungiCartaMazzo(Mazzo* mazzo, Carta carta) {
     mazzo->numeroCarte++;
 
     // allocazione dinamica e verifica
-    mazzo->carte = (Carta*) realloc(mazzo->carte, mazzo->numeroCarte);
+    if(mazzo->carte == NULL) {
+        mazzo->carte = (Carta*) malloc(sizeof(Carta));
+    } else {
+        mazzo->carte = (Carta*) realloc(mazzo->carte, mazzo->numeroCarte * sizeof(Carta));
+    }
     assertPuntatoreNonNull(mazzo->carte, "\nErrore: impossibile allocare dinamicamente.");
 
     // aggiunta della nuova carta
@@ -270,10 +274,15 @@ void mostraCarta(Carta carta) {
 void mostraCarteMazzo(Mazzo mazzo) {
     int i;
 
+    printf("\n-------------- CARTE --------------");
+
     if(mazzo.numeroCarte == 0)
         printf("\nNessuna carta presente!");
     for(i = 0; i < mazzo.numeroCarte; i++) {
         printf("\n%d) ", i+1);
         mostraCarta(mazzo.carte[i]);
+        printf("\n");
     }
+
+    printf("\n-----------------------------------\n");
 }
