@@ -113,11 +113,11 @@ Salvataggio creaPartita() {
     assegnaRuoli(partita.giocatori, partita.nGiocatori);
 
     // caricamento del mazzoPesca dal file "mazzo_bang.txt"
-    printf("\nI ruoli sono stati assegnati! Carico il mazzoPesca di carte dal file di testo...");
+    printf("\nI ruoli sono stati assegnati! Carico il mazzoPesca di carte dal file di testo...\n");
     Mazzo mazzoPesca = caricaMazzo();
 
-    printf("\nMazzo caricato! Adesso distribuirò le carte dalla cima del mazzoPesca di pesca. Vi ricordo "
-           "che ad ogni giocatore spetta un numero di carte pari al numero dei suoi punti vita di partenza");
+    printf("\nMazzo caricato! Adesso distribuirò le carte dalla cima del mazzoPesca di pesca.\n"
+           "Vi ricordo che ad ogni giocatore spetta un numero di carte pari al numero dei suoi punti vita di partenza.\n");
 
     // creazione di un mazzo vuoto che contiene le carte scartate
     Mazzo mazzoScarti = {MAZZO_SCARTO, 0, NULL};
@@ -144,7 +144,7 @@ Salvataggio creaPartita() {
         printf("\nCi siamo quasi! Come ultima cosa, vorrei che mi dicessi un nome per il file di salvataggio\n"
                "in cui sarà memorizzata questa partita (max. %d caratteri)\n", SAVEGAME_NAME_LEN);
         printf("?) ");
-        scanf("%16s", partita.nomeSalvataggio);
+        scanf(" %16s", partita.nomeSalvataggio);
         if(salvataggioEsistente(partita.nomeSalvataggio))
             printf("\nQuesto salvataggio esiste già! Riprova.");
     } while (salvataggioEsistente(partita.nomeSalvataggio));
@@ -196,11 +196,11 @@ void avviaPartita(Salvataggio partita) {
         // salvo il puntatore del giocatore corrente
         giocatore = &partita.giocatori[partita.prossimoGiocatore];
 
-        printf("\n\n------ TURNO n° %d ------\n", partita.prossimoGiocatore + 1);
+        printf("\n\n%s TURNO n° %d %s", MEZZO_SEPARATORE, partita.prossimoGiocatore + 1, MEZZO_SEPARATORE);
 
         // salvo il nome del ruolo del giocatore.
         prendiNomeRuolo(giocatore->ruoloAssegnato, ruoloGiocatore);
-        printf("\n%s, tocca a te giocare! Il tuo ruolo è '%s'.", giocatore->nomeUtente, ruoloGiocatore);
+        printf("\n%s, tocca a te giocare! Il tuo ruolo è '%s'.\n", giocatore->nomeUtente, ruoloGiocatore);
 
         // calcolo della gittata del giocatore
         giocatore->gittata = calcolaGittata(giocatore);
@@ -208,14 +208,17 @@ void avviaPartita(Salvataggio partita) {
         // all'inizio del turno, il giocatore pesca due carte
         pescaCarte(&partita.mazzoPesca, &partita.mazzoScarti, giocatore, 2);
 
-        printf("\nPer prima cosa, verifico l'effetto delle tue carte in gioco...");
+        printf("\n%s CARTE IN GIOCO %s\n", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
+        printf("Per prima cosa, verifico l'effetto delle tue carte in gioco...");
         // se le carte in gioco permettono al giocatore di continuare, allora inizia il turno
         if(verificaCarteInGioco(&partita.mazzoPesca, &partita.mazzoScarti, partita.prossimoGiocatore, partita.giocatori, partita.nGiocatori)) {
+            printf("\n%s CARTE IN GIOCO %s\n", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
             printf("\nIniziamo il turno!");
             bangGiocato = false;
             do {
                 // il giocatore sceglie cosa fare all'inizio del turno
                 do {
+                    printf("\n%s%s%s", MEZZO_SEPARATORE, MEZZO_SEPARATORE, MEZZO_SEPARATORE);
                     printf("\nScegli una delle seguenti azioni:\n"
                            "%d) Gioca una delle tue carte\n"
                            "%d) Vedi le tue carte in mano\n"
@@ -274,7 +277,7 @@ void avviaPartita(Salvataggio partita) {
                                 if (strcmp(cartaSelezionata.nomeCarta, "Bang!") == 0) {
                                     armaGiocatore = prendiArmaGiocatore(giocatore);
                                     // il giocatore deve selezionare un'altra carta perché non può giocare un altro bang
-                                    if (bangGiocato && armaGiocatore != NULL && strcmp(armaGiocatore->nomeCarta, "Volcanic") != 0) {
+                                    if (bangGiocato && (armaGiocatore == NULL || strcmp(armaGiocatore->nomeCarta, "Volcanic") != 0)) {
                                         printf("\nHai già giocato un 'Bang!' in questo turno!");
                                         ripetizioneCiclo = true; // scelta invalida, il giocatore deve scegliere un'altra carta
                                         continue;

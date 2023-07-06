@@ -274,7 +274,7 @@ void mostraCarta(Carta carta) {
 void mostraCarteMazzo(Mazzo mazzo) {
     int i;
 
-    printf("\n-------------- CARTE --------------");
+    printf("\n%s CARTE %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
 
     if(mazzo.numeroCarte == 0)
         printf("\nNessuna carta presente!");
@@ -284,5 +284,5 @@ void mostraCarteMazzo(Mazzo mazzo) {
         printf("\n");
     }
 
-    printf("\n-----------------------------------\n");
+    printf("\n%s%s%s", MEZZO_SEPARATORE, MEZZO_SEPARATORE, MEZZO_SEPARATORE);
 }

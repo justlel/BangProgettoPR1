@@ -1,5 +1,6 @@
 #include "mazzo.h"
 #include "string.h"
+#include "utils.h"
 
 /**
  * Caratteri che l'utente può inserire in un prompt per confermare/rifiutare una richiesta del programma.

@@ -7,6 +7,7 @@
 #include "utils.h"
 
 
+#define MEZZO_SEPARATORE "-----------------"
 // -------- MACRO RELATIVE ALLE IMPOSTAZIONI DELLA PARTITA --------
 /**
  * Numero minimo e massimo di giocatori per partita.
@@ -31,9 +32,7 @@
  */
 #define PROMPT_CONFERMA 'y'
 #define PROMPT_RIFIUTA 'n'
-/**
- *
- */
+
 #define PROMPT_TURNO_GIOCA_CARTA 1
 #define PROMPT_TURNO_VEDI_CARTE_MANO 2
 #define PROMPT_TURNO_VEDI_CARTE_GIOCO 3
