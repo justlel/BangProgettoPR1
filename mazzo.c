@@ -220,15 +220,16 @@ void rimuoviCartaMazzo(Mazzo* mazzo, int posizioneCarta) {
     for(i = posizioneCarta; i <= mazzo->numeroCarte - 1; i++) {
         mazzo->carte[i] = mazzo->carte[i+1];
     }
-    // rialloco la memoria dell'array di carte diminuendo lo spazio di uno
-    mazzo->carte = (Carta*) realloc(mazzo->carte, sizeof(Carta) * mazzo->numeroCarte);
-    assertPuntatoreNonNull(mazzo->carte, "\nErrore: la riallocazione dinamica del mazzo di carte dopo la rimozione non è riuscita.");
-    /*
-    for(i = 0; i < mazzo->numeroCarte; i++) {
-        if(i != posizioneCarta)
-            nuovoMazzo[i] = mazzo->carte[i];
+
+    // se il mazzo è vuoto, libero la memoria
+    if(mazzo->numeroCarte == 0) {
+        free(mazzo->carte);
+        mazzo->carte = NULL;
+    // altrimenti, rialloco la memoria dell'array di carte diminuendo lo spazio di uno
+    } else {
+        mazzo->carte = (Carta*) realloc(mazzo->carte, sizeof(Carta) * mazzo->numeroCarte);
+        assertPuntatoreNonNull(mazzo->carte, "\nErrore: la riallocazione dinamica del mazzo di carte dopo la rimozione non è riuscita.");
     }
-    */
 }
 
 void aggiungiCartaMazzo(Mazzo* mazzo, Carta carta) {
@@ -277,12 +278,12 @@ void mostraCarteMazzo(Mazzo mazzo) {
     printf("\n%s CARTE %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
 
     if(mazzo.numeroCarte == 0)
-        printf("\nNessuna carta presente!");
+        printf("\nNessuna carta presente!\n");
     for(i = 0; i < mazzo.numeroCarte; i++) {
         printf("\n%d) ", i+1);
         mostraCarta(mazzo.carte[i]);
         printf("\n");
     }
 
-    printf("\n%s%s%s", MEZZO_SEPARATORE, MEZZO_SEPARATORE, MEZZO_SEPARATORE);
+    printf("%s-------%s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
 }

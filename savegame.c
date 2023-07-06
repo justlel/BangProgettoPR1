@@ -49,7 +49,7 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
         if(salvataggio.giocatori[i].carteMano.numeroCarte > 0) {
             salvataggio.giocatori[i].carteMano.carte = (Carta *) calloc(salvataggio.giocatori[i].carteMano.numeroCarte, sizeof(Carta));
             assertPuntatoreNonNull(salvataggio.giocatori[i].carteMano.carte, "\nImpossibile caricare dinamicamente le carte del giocatore.");
-            readMano = fread(&salvataggio.giocatori[i].carteMano.carte, sizeof(Carta), salvataggio.giocatori[i].carteMano.numeroCarte, salvataggioFile);
+            readMano = fread(salvataggio.giocatori[i].carteMano.carte, sizeof(Carta), salvataggio.giocatori[i].carteMano.numeroCarte, salvataggioFile);
             if(readMano != salvataggio.giocatori[i].carteMano.numeroCarte) {
                 printf("\nImpossibile leggere tutte le carte della mano del giocatore.");
                 exit(-1);
@@ -59,7 +59,7 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
         if(salvataggio.giocatori[i].carteGioco.numeroCarte > 0) {
             salvataggio.giocatori[i].carteGioco.carte = (Carta *) calloc(salvataggio.giocatori[i].carteGioco.numeroCarte, sizeof(Carta));
             assertPuntatoreNonNull(salvataggio.giocatori[i].carteGioco.carte, "\nImpossibile caricare dinamicamente le carte del giocatore.");
-            readGioco = fread(&salvataggio.giocatori[i].carteGioco.carte, sizeof(Carta), salvataggio.giocatori[i].carteGioco.numeroCarte, salvataggioFile);
+            readGioco = fread(salvataggio.giocatori[i].carteGioco.carte, sizeof(Carta), salvataggio.giocatori[i].carteGioco.numeroCarte, salvataggioFile);
             if(readGioco != salvataggio.giocatori[i].carteGioco.numeroCarte) {
                 printf("\nImpossibile leggere tutte le carte in gioco del giocatore.");
                 exit(-1);
@@ -82,7 +82,9 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
     }
     // lettura carte del mazzo di pesca
     if(salvataggio.mazzoPesca.numeroCarte > 0) {
-        read = fread(&salvataggio.mazzoPesca.carte, sizeof(Carta), salvataggio.mazzoPesca.numeroCarte, salvataggioFile);
+        salvataggio.mazzoPesca.carte = (Carta *) calloc(salvataggio.mazzoPesca.numeroCarte, sizeof(Carta));
+        assertPuntatoreNonNull(salvataggio.mazzoPesca.carte, "\nErrore: impossibile caricare le carte del mazzo di pesca.");
+        read = fread(salvataggio.mazzoPesca.carte, sizeof(Carta), salvataggio.mazzoPesca.numeroCarte, salvataggioFile);
         if(read != salvataggio.mazzoPesca.numeroCarte) {
             printf("\nImpossibile leggere tutte le carte del mazzo di pesca del giocatore.");
             exit(-1);
@@ -97,7 +99,9 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
     }
     // lettura carte del mazzo di scarti
     if(salvataggio.mazzoScarti.numeroCarte > 0) {
-        read = fread(&salvataggio.mazzoScarti.carte, sizeof(Carta), salvataggio.mazzoScarti.numeroCarte, salvataggioFile);
+        salvataggio.mazzoScarti.carte = (Carta *) calloc(salvataggio.mazzoScarti.numeroCarte, sizeof(Carta));
+        assertPuntatoreNonNull(salvataggio.mazzoScarti.carte, "\nErrore: impossibile caricare le carte del mazzo di scarti.");
+        read = fread(salvataggio.mazzoScarti.carte, sizeof(Carta), salvataggio.mazzoScarti.numeroCarte, salvataggioFile);
         if(read != salvataggio.mazzoScarti.numeroCarte) {
             printf("\nImpossibile leggere tutte le carte del mazzo di scarti del giocatore.");
             exit(-1);

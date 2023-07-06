@@ -159,6 +159,7 @@ Salvataggio creaPartita() {
 }
 
 void avviaPartita(Salvataggio partita) {
+    int i;
     // variabili booleane di appoggio per i cicli sottostanti
     bool ripetizioneCiclo, ripetiScelta = true;
     // variabili booleane che mantengono informazioni sulle carte giocate nei turni precedenti
@@ -166,6 +167,9 @@ void avviaPartita(Salvataggio partita) {
 
     // variabili di tipo int di appoggio per la selezioni delle carte da giocare e delle opzioni dei prompt durante il turno
     int promptTurnoScelta, posizioneCartaSelezionata;
+
+    // variabile che contiene il numero di carte da scartare a fine turno
+    int carteDaScartare;
 
     // variabili di tipo char di appoggio per la selezione delle opzioni nei prompt durante il turno
     char ruoloGiocatore[NOME_RUOLO_LEN_MAX + 1], tmpChoice;
@@ -213,12 +217,11 @@ void avviaPartita(Salvataggio partita) {
         // se le carte in gioco permettono al giocatore di continuare, allora inizia il turno
         if(verificaCarteInGioco(&partita.mazzoPesca, &partita.mazzoScarti, partita.prossimoGiocatore, partita.giocatori, partita.nGiocatori)) {
             printf("\n%s CARTE IN GIOCO %s\n", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
-            printf("\nIniziamo il turno!");
             bangGiocato = false;
             do {
                 // il giocatore sceglie cosa fare all'inizio del turno
                 do {
-                    printf("\n%s%s%s", MEZZO_SEPARATORE, MEZZO_SEPARATORE, MEZZO_SEPARATORE);
+                    printf("\n%s MENU %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
                     printf("\nScegli una delle seguenti azioni:\n"
                            "%d) Gioca una delle tue carte\n"
                            "%d) Vedi le tue carte in mano\n"
@@ -255,12 +258,9 @@ void avviaPartita(Salvataggio partita) {
                                        "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
                                 scanf(" %c", &tmpChoice);
                                 // torno al menu principale
-                                if(tmpChoice == PROMPT_RIFIUTA) {
-                                    printf("\nTorno al menu principale!");
+                                if(tmpChoice == PROMPT_RIFIUTA)
                                     break;
-                                }
                             }
-
 
                             ripetizioneCiclo = false;
 
@@ -283,6 +283,8 @@ void avviaPartita(Salvataggio partita) {
                                         continue;
                                     }
                                 }
+
+                                svuotaSchermo();
 
                                 // la funzione 'giocaCarta' restituisce "False" se la carta non è stata giocata per qualsiasi motivo
                                 // salvo in una variabile booleana un valore che indica se la carta è stata effettivamente giocata o meno
@@ -328,14 +330,18 @@ void avviaPartita(Salvataggio partita) {
                         printf("\nHai deciso di passare il turno! Sei sicuro?\n"
                                "Ricorda che prima di passare, devi scartare le carte in eccesso.\n"
                                "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
-                        tmpChoice = getchar();
+                        scanf(" %c", &tmpChoice);
                         if (tmpChoice == PROMPT_CONFERMA) {
-                            // chiedo al giocatore di scartare le carte in eccesso
-                            for(int i = 0; i < giocatore->carteMano.numeroCarte - giocatore->puntiVita; i++) {
-                                scartaCarta(&giocatore->carteMano, &partita.mazzoScarti);
+                            if(giocatore->carteMano.numeroCarte > giocatore->puntiVita) {
+                                carteDaScartare = giocatore->carteMano.numeroCarte - giocatore->puntiVita;
+                                printf("\nPrima di passare il turno, devi scartare %d carte!", carteDaScartare);
+                                // chiedo al giocatore di scartare le carte in eccesso
+                                for(i = 0; i < carteDaScartare; i++) {
+                                    scartaCarta(&giocatore->carteMano, &partita.mazzoScarti);
+                                }
+                                printf("\nBene, passiamo il turno al prossimo giocatore!");
+                                ripetiScelta = false;
                             }
-                            printf("\nBene, passiamo il turno al prossimo giocatore!");
-                            ripetiScelta = false;
                         }
                         break;
                     // ultima scelta: chiudo il gioco
@@ -349,6 +355,13 @@ void avviaPartita(Salvataggio partita) {
                             chiudiGioco();
                         }
                 }
+
+                // aspetto che il giocatore prema invio per tornare al menu principale
+                printf("\nPremi 'Invio' per tornare al menu principale.");
+                while (getchar() != '\n')
+                    continue;
+                getchar();
+                svuotaSchermo();
             } while (ripetiScelta); // se in una delle sue azioni il giocatore ha scelto "annulla", allora ripeti il ciclo di scelta
         }
 
@@ -423,6 +436,10 @@ bool verificaCarteInGioco(Mazzo* mazzoPesca, Mazzo* mazzoScarti, int posizioneGi
             printf("\nSei in prigione! Ora sarà estratta una carta: se il suo seme sarà di Cuori, potrai evadere, altrimenti salterai il turno!");
             cartaEstratta = estraiCarta(mazzoPesca, mazzoScarti);
 
+            // scarto comunque la carta prigione
+            aggiungiCartaMazzo(mazzoScarti, giocatore->carteGioco.carte[posizioneCartaPrigione]);
+            rimuoviCartaMazzo(&giocatore->carteGioco, posizioneCartaPrigione);
+
             // verifico che il giocatore possa evadere
             if(cartaEstratta.semeCarta == CUORI) {
                 printf("\nLa carta estratta è di cuori, puoi evadere di prigione!");
@@ -430,10 +447,6 @@ bool verificaCarteInGioco(Mazzo* mazzoPesca, Mazzo* mazzoScarti, int posizioneGi
                 printf("\nOps, la carta estratta non è di cuori, quindi salterai il turno!");
                 return false;
             }
-
-            // scarto comunque la carta prigione
-            aggiungiCartaMazzo(mazzoScarti, giocatore->carteGioco.carte[posizioneCartaPrigione]);
-            rimuoviCartaMazzo(&giocatore->carteGioco, posizioneCartaPrigione);
         }
     } else {
         printf("\nNon hai nessuna carta in gioco!");
@@ -595,7 +608,7 @@ Salvataggio caricaPartita() {
     // se l'utente ha confermato, carico il salvataggio, altrimenti chiudo il gioco
     if(conferma == PROMPT_CONFERMA) {
         printf("\nCaricamento del salvataggio '%s'...", nomeSalvataggio);
-        caricaSalvataggio(nomeSalvataggio);
+        return caricaSalvataggio(nomeSalvataggio);
     } else {
         printf("\nUscita dal gioco.");
         chiudiGioco();

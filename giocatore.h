@@ -63,6 +63,7 @@ typedef struct {
 
 // FUNZIONI SULLE DISTANZE TRA GIOCATORI
 int* calcolaDistanzeGiocatori(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore);
+int calcolaDistanzaGiocatore(Giocatore giocatori[], int posizioneGiocatore1, int posizioneGiocatore2);
 void mostraDistanze(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore);
 
 // FUNZIONI SULLE CARTE DEI GIOCATORI
@@ -71,9 +72,7 @@ void mostraCarteInGiocoAltri(int nGiocatori, Giocatore giocatori[nGiocatori], in
 // FUNZIONI
 bool possiedeCartaInGioco(Giocatore giocatore, char nomeCarta[NOME_CARTA_LEN + 1]);
 
-bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore giocatori[nGiocatori],
-                int posizioneGiocatore, int posizioneCarta);
-bool manoPiena(Giocatore giocatore);
+bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore, int posizioneCarta);
 
 void pescaCarte(Mazzo *mazzoPesca, Mazzo *mazzoScarti, Giocatore *giocatore, int nCarte);
 void scartaCarta(Mazzo* mazzoMano, Mazzo* mazzoScarti);
@@ -89,3 +88,5 @@ rimuoviPuntiVita(Giocatore *giocatoreFerito, Giocatore *giocatoreAttaccante, int
 void prendiNomeRuolo(Ruoli ruoli, char nomeRuolo[NOME_RUOLO_LEN_MAX + 1]);
 int prendiVitaMassima(Giocatore giocatore);
 int calcolaGittata(Giocatore *giocatore);
+
+Giocatore *selezionaGiocatore(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore, bool mostraDistanze, bool calcolaDistanze);
