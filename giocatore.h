@@ -76,10 +76,9 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
 
 void pescaCarte(Mazzo *mazzoPesca, Mazzo *mazzoScarti, Giocatore *giocatore, int nCarte);
 void scartaCarta(Mazzo* mazzoMano, Mazzo* mazzoScarti);
-Carta estraiCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti);
 
 void aggiungiCartaInGioco(Giocatore* giocatoreCarta, Giocatore* giocatoreBersaglio, int posizioneCarta);
-Carta * prendiArmaGiocatore(Giocatore *giocatore);
+Carta* prendiArmaGiocatore(Giocatore *giocatore);
 
 // FUNZIONI SUI GIOCATORI
 void
@@ -88,5 +87,6 @@ rimuoviPuntiVita(Giocatore *giocatoreFerito, Giocatore *giocatoreAttaccante, int
 void prendiNomeRuolo(Ruoli ruoli, char nomeRuolo[NOME_RUOLO_LEN_MAX + 1]);
 int prendiVitaMassima(Giocatore giocatore);
 int calcolaGittata(Giocatore *giocatore);
+void mostraVitaGiocatori(int nGiocatori, Giocatore giocatori[nGiocatori]);
 
 Giocatore *selezionaGiocatore(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore, bool mostraDistanze, bool calcolaDistanze);

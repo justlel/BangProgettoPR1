@@ -136,7 +136,7 @@ Salvataggio creaPartita() {
     // verifico che lo sceriffo sia stato individuato, altrimenti c'è un problema nell'assegnazione
     if(partita.giocatori[partita.prossimoGiocatore].ruoloAssegnato != SCERIFFO) {
         printf("\nErrore di avvio: impossibile determinare lo sceriffo.");
-        chiudiGioco();
+        exit(-1);
     }
 
     // richiesta all'utente di un nome che identifichi il file di salvataggio
@@ -192,7 +192,7 @@ void avviaPartita(Salvataggio partita) {
     assertPuntatoreNonNull(giocatore, "\nErrore: impossibile allocare memoria dinamicamente.");
 
     svuotaSchermo();
-    // inizio della logica del turno
+    // inizio della logica della partita
     while(!partitaTerminata(partita, ruoloVincitore)) { // verifico che la partita non sia terminata
         // scrittura del file di salvataggio
         scriviSalvataggio(partita, partita.nomeSalvataggio);
@@ -230,17 +230,19 @@ void avviaPartita(Salvataggio partita) {
                            "%d) Vedi le tue carte in gioco\n"
                            "%d) Controlla la tua distanza dagli altri giocatori\n"
                            "%d) Vedi le carte in gioco degli altri giocatori\n"
+                           "%d) Vedi la vita di tutti i giocatori\n"
                            "%d) Passa il turno\n"
                            "%d) Chiudi il gioco\n"
                            "?) ",
                            PROMPT_TURNO_GIOCA_CARTA, PROMPT_TURNO_VEDI_CARTE_MANO, PROMPT_TURNO_VEDI_CARTE_GIOCO, PROMPT_TURNO_VEDI_DISTANZE,
-                           PROMPT_TURNO_VEDI_CARTE_GIOCO_ALTRI, PROMPT_TURNO_PASSA_TURNO, PROMPT_TURNO_ESCI);
+                           PROMPT_TURNO_VEDI_CARTE_GIOCO_ALTRI, PROMPT_VEDI_VITA_ALTRI, PROMPT_TURNO_PASSA_TURNO, PROMPT_TURNO_ESCI);
                     scanf("%d", &promptTurnoScelta);
                     ripetizioneCiclo = promptTurnoScelta != PROMPT_TURNO_GIOCA_CARTA &&
                                        promptTurnoScelta != PROMPT_TURNO_VEDI_CARTE_MANO &&
                                        promptTurnoScelta != PROMPT_TURNO_VEDI_CARTE_GIOCO &&
                                        promptTurnoScelta != PROMPT_TURNO_VEDI_DISTANZE &&
                                        promptTurnoScelta != PROMPT_TURNO_VEDI_CARTE_GIOCO_ALTRI &&
+                                       promptTurnoScelta != PROMPT_VEDI_VITA_ALTRI &&
                                        promptTurnoScelta != PROMPT_TURNO_PASSA_TURNO &&
                                        promptTurnoScelta != PROMPT_TURNO_ESCI;
                     if (ripetizioneCiclo)
@@ -254,9 +256,14 @@ void avviaPartita(Salvataggio partita) {
                     case PROMPT_TURNO_GIOCA_CARTA:
                         // chiedo al giocatore di scegliere una carta
                         do {
+                            // verifico che il mazzo di mano non sia vuoto
+                            if(giocatore->carteMano.numeroCarte < 1) {
+                                printf("\nNon hai carte nella tua mano!");
+                                break;
+                            }
                             // se il ciclo è stato ripetuto, chiedo al giocatore se desidera giocare un'altra carta
                             if(ripetizioneCiclo) {
-                                printf("\nDesideri giocare un'altra carta?\n"
+                                printf("\n\nDesideri giocare un'altra carta?\n"
                                        "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
                                 scanf(" %c", &tmpChoice);
                                 // torno al menu principale
@@ -299,9 +306,14 @@ void avviaPartita(Salvataggio partita) {
                                     // se la carta giocata è un 'Bang!', allora impedisco al giocatore di giocarla ancora
                                     if (strcmp(cartaSelezionata.nomeCarta, "Bang!") == 0)
                                         bangGiocato = true;
-                                    // rimuovo la carta dalla mano del giocatore
-                                    aggiungiCartaMazzo(&partita.mazzoScarti, cartaSelezionata);
-                                    rimuoviCartaMazzo(&giocatore->carteMano, posizioneCartaSelezionata - 1);
+                                    // se la carta non è della tipologia "in gioco" o "arma", scarto la carta dalla mano del giocatore
+                                    // potrebbe succedere che, nell'uccisione di uno sceriffo, un giocatore sia già obbligato a scartare le sue carte
+                                    if(cartaSelezionata.tipologiaCarta != ARMA &&
+                                            cartaSelezionata.tipologiaCarta != EFFETTO &&
+                                            giocatore->carteMano.numeroCarte > 0) {
+                                        aggiungiCartaMazzo(&partita.mazzoScarti, cartaSelezionata);
+                                        rimuoviCartaMazzo(&giocatore->carteMano, posizioneCartaSelezionata - 1);
+                                    }
                                 } else { // permetto al giocatore di giocare un'altra carta
                                     ripetizioneCiclo = true;
                                 }
@@ -327,6 +339,9 @@ void avviaPartita(Salvataggio partita) {
                     case PROMPT_TURNO_VEDI_CARTE_GIOCO_ALTRI:
                         mostraCarteInGiocoAltri(partita.nGiocatori, partita.giocatori,partita.prossimoGiocatore);
                         break;
+                    case PROMPT_VEDI_VITA_ALTRI:
+                        mostraVitaGiocatori(partita.nGiocatori, partita.giocatori);
+                        break;
                     // sesta scelta: passo il turno
                     case PROMPT_TURNO_PASSA_TURNO:
                         printf("\nHai deciso di passare il turno! Sei sicuro?\n"
@@ -341,9 +356,9 @@ void avviaPartita(Salvataggio partita) {
                                 for(i = 0; i < carteDaScartare; i++) {
                                     scartaCarta(&giocatore->carteMano, &partita.mazzoScarti);
                                 }
-                                printf("\nBene, passiamo il turno al prossimo giocatore!");
-                                ripetiTurno = false;
                             }
+                            printf("\nBene, passiamo il turno al prossimo giocatore!");
+                            ripetiTurno = false;
                         }
                         break;
                     // ultima scelta: chiudo il gioco
@@ -369,15 +384,14 @@ void avviaPartita(Salvataggio partita) {
 
         // turno terminato
         svuotaSchermo();
-        printf("\n%s TURNO TERMINATO %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
+        printf("\n\n%s TURNO TERMINATO %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
         // seleziono il prossimo giocatore in vita per il turno successivo
         do {
             partita.prossimoGiocatore = (partita.prossimoGiocatore + 1) % partita.nGiocatori;
-        } while(partita.giocatori[partita.prossimoGiocatore].puntiVita < 0);
+        } while(partita.giocatori[partita.prossimoGiocatore].puntiVita < 1);
         printf("\nIl prossimo giocatore sarà '%s'! Premi 'Invio' quando sei pronto a continuare.", partita.giocatori[partita.prossimoGiocatore].nomeUtente);
         while (getchar() != '\n')
             continue;
-        getchar();
     }
     // fine logica del turno
 
