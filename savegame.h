@@ -35,5 +35,9 @@ void scriviSalvataggio(Salvataggio salvataggio, char nomeSalvataggio[SAVEGAME_NA
 
 void aggiungiEstensioneSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1], char nomeCompleto[SAVEGAME_NAME_LEN + SAVEGAME_EXT_LEN + 1]);
 
+bool isSalvataggioInLista(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]);
+void stampaSalvataggiInLista();
+void aggiungiSalvataggioLista(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]);
 bool salvataggioEsistente(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]);
+
 bool fileEsistente(char nomeFile[SAVEGAME_NAME_LEN + 1]);

@@ -161,7 +161,7 @@ Salvataggio creaPartita() {
 void avviaPartita(Salvataggio partita) {
     int i;
     // variabili booleane di appoggio per i cicli sottostanti
-    bool ripetizioneCiclo, ripetiScelta = true;
+    bool ripetizioneCiclo, ripetiTurno = true;
     // variabili booleane che mantengono informazioni sulle carte giocate nei turni precedenti
     bool bangGiocato, cartaGiocata = false;
 
@@ -191,12 +191,12 @@ void avviaPartita(Salvataggio partita) {
     assertPuntatoreNonNull(ruoloVincitore, "\nErrore: impossibile allocare memoria dinamicamente.");
     assertPuntatoreNonNull(giocatore, "\nErrore: impossibile allocare memoria dinamicamente.");
 
-    // scrittura del file di salvataggio
-    scriviSalvataggio(partita, partita.nomeSalvataggio);
-
+    svuotaSchermo();
     // inizio della logica del turno
     while(!partitaTerminata(partita, ruoloVincitore)) { // verifico che la partita non sia terminata
-        svuotaSchermo();
+        // scrittura del file di salvataggio
+        scriviSalvataggio(partita, partita.nomeSalvataggio);
+
         // salvo il puntatore del giocatore corrente
         giocatore = &partita.giocatori[partita.prossimoGiocatore];
 
@@ -217,7 +217,9 @@ void avviaPartita(Salvataggio partita) {
         // se le carte in gioco permettono al giocatore di continuare, allora inizia il turno
         if(verificaCarteInGioco(&partita.mazzoPesca, &partita.mazzoScarti, partita.prossimoGiocatore, partita.giocatori, partita.nGiocatori)) {
             printf("\n%s CARTE IN GIOCO %s\n", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
+            // imposto le variabili booleane ausiliarie
             bangGiocato = false;
+            ripetiTurno = true;
             do {
                 // il giocatore sceglie cosa fare all'inizio del turno
                 do {
@@ -340,7 +342,7 @@ void avviaPartita(Salvataggio partita) {
                                     scartaCarta(&giocatore->carteMano, &partita.mazzoScarti);
                                 }
                                 printf("\nBene, passiamo il turno al prossimo giocatore!");
-                                ripetiScelta = false;
+                                ripetiTurno = false;
                             }
                         }
                         break;
@@ -362,13 +364,20 @@ void avviaPartita(Salvataggio partita) {
                     continue;
                 getchar();
                 svuotaSchermo();
-            } while (ripetiScelta); // se in una delle sue azioni il giocatore ha scelto "annulla", allora ripeti il ciclo di scelta
+            } while (ripetiTurno); // se in una delle sue azioni il giocatore ha scelto "annulla", allora ripeti il ciclo di scelta
         }
 
+        // turno terminato
+        svuotaSchermo();
+        printf("\n%s TURNO TERMINATO %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
         // seleziono il prossimo giocatore in vita per il turno successivo
         do {
             partita.prossimoGiocatore = (partita.prossimoGiocatore + 1) % partita.nGiocatori;
         } while(partita.giocatori[partita.prossimoGiocatore].puntiVita < 0);
+        printf("\nIl prossimo giocatore sarà '%s'! Premi 'Invio' quando sei pronto a continuare.", partita.giocatori[partita.prossimoGiocatore].nomeUtente);
+        while (getchar() != '\n')
+            continue;
+        getchar();
     }
     // fine logica del turno
 
@@ -520,14 +529,8 @@ bool partitaTerminata(Salvataggio partita, Ruoli* ruoloVincitore) {
  * @return Il salvataggio caricato dal file.
  */
 Salvataggio caricaPartita() {
-    // variabili di supporto utilizzate nella lettura del file contenente i nomi dei salvataggi
-    int read, nSalvataggi = 0, toLoad;
     // nome del salvataggio da caricare
     char nomeSalvataggio[SAVEGAME_NAME_LEN + 1];
-    // array di puntatori allocato dinamicamente. se esiste un file con i nomi dei salvataggi, questo li contiene tutti
-    char** salvataggi = NULL;
-    // puntatore al file che, se esiste, contiene i nomi di tutti i salvataggi disponibili
-    FILE* savegamesFile = NULL;
     // booleano di supporto per verificare che un salvataggio da caricare esista
     bool savegameEsistente = true;
     // char di supporto per confermare il caricamento di un salvataggio
@@ -535,65 +538,23 @@ Salvataggio caricaPartita() {
 
     // verifico l'esistenza del file con la lista dei salvataggi
     if(fileEsistente(SAVEGAME_LIST_FILE)) {
-        savegamesFile = fopen(SAVEGAME_LIST_FILE, "r");
-        assertPuntatoreNonNull(savegamesFile, "\nImpossibile aprire il file contenente la lista dei salvataggi.");
-
-        // dichiarazione dinamica dell'array di stringhe con i nomi dei salvataggi e verifica
-        salvataggi = (char**) calloc(1, sizeof(char*));
-        assertPuntatoreNonNull(salvataggi, "\nImpossibile allocare dinamicamente memoria.");
-
-        // lettura del file contenente i salvataggi
-        do {
-            // allocazione dinamica della stringa con il nome del salvataggio corrente e verifica
-            salvataggi[nSalvataggi] = (char*) calloc(SAVEGAME_NAME_LEN, sizeof(char));
-            assertPuntatoreNonNull(salvataggi[nSalvataggi], "\nImpossibile allocare dinamicamente memoria.");
-
-            // lettura della riga, che contiene il nome del file
-            read = fscanf(savegamesFile, "%s\n", salvataggi[nSalvataggi]);
-
-            // se è stato letto qualcosa, incremento il numero di salvataggi disponibili
-            if(read == 1)
-                nSalvataggi++;
-        } while(read == 1);
-
-        // stampo a schermo i salvataggi disponibili
-        printf("\nLista dei salvataggi rinvenuta dal file '%s':", SAVEGAME_LIST_FILE);
-        for(int i = 0; i < nSalvataggi; i++) {
-            printf("\n%d) %s", i+1, salvataggi[i]);
-        }
-
-        do {
-            // prompt per permettere all'utente di scegliere il salvataggio da caricare
-            printf("\nInserisci il numero corrispondente al salvataggio da caricare:\n"
-                   "?) ");
-            scanf("%d", &toLoad);
-            if(toLoad < 1 || toLoad > nSalvataggi) {
-                printf("\nInserisci un numero tra quelli nella lista.");
-            } else {
-                // verifico che il salvataggio scelto esista
-                savegameEsistente = salvataggioEsistente(salvataggi[toLoad - 1]);
-                if(!savegameEsistente) {
-                    printf("\nImpossibile caricare il salvataggio scelto.");
-                }
-            }
-        } while((toLoad < 1 || toLoad > nSalvataggi) || !savegameEsistente);
-        strcpy(nomeSalvataggio, salvataggi[toLoad - 1]);
-        free(salvataggi); // libero la memoria non necessaria
-    } else {
-        do {
-            printf("\nSe vuoi caricare un salvataggio, inserisci il nome del file in cui è stato scritto\n"
-                   "?) ");
-            scanf(" %16s", nomeSalvataggio);
-            if(strcmp(nomeSalvataggio, "") == 0) {
-                printf("\nInserisci un nome valido");
-            } else {
-                savegameEsistente = salvataggioEsistente(nomeSalvataggio);
-                if(!savegameEsistente) {
-                    printf("\nImpossibile caricare il salvataggio scelto.");
-                }
-            }
-        } while(strcmp(nomeSalvataggio, "") == 0 || !savegameEsistente);
+        // stampa a schermo del file contenente la lista dei salvataggi
+        stampaSalvataggiInLista();
     }
+
+    do {
+        printf("\nInserisci il nome del file in cui è stato scritto il salvataggio.\n"
+               "?) ");
+        scanf(" %16s", nomeSalvataggio);
+        if(strcmp(nomeSalvataggio, "") == 0) {
+            printf("\nInserisci un nome valido");
+        } else {
+            savegameEsistente = salvataggioEsistente(nomeSalvataggio);
+            if(!savegameEsistente) {
+                printf("\nImpossibile caricare il salvataggio scelto.");
+            }
+        }
+    } while(strcmp(nomeSalvataggio, "") == 0 || !savegameEsistente);
 
     // conferma del salvataggio scelto
     do {

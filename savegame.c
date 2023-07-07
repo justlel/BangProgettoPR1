@@ -118,6 +118,12 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
     return salvataggio;
 }
 
+/**
+ * Subroutine che scrive una struct "Salvataggio" sul file con il nome fornito.
+ *
+ * @param salvataggio
+ * @param nomeSalvataggio
+ */
 void scriviSalvataggio(Salvataggio salvataggio, char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
     // numero di byte scritti per ogni operazione
     size_t write, writePlayer, writeMano, writeGioco;
@@ -129,9 +135,13 @@ void scriviSalvataggio(Salvataggio salvataggio, char nomeSalvataggio[SAVEGAME_NA
     // ottengo il nome completo del file
     aggiungiEstensioneSalvataggio(nomeSalvataggio, nomeSalvataggioCompleto);
 
+    // scrivo il nome sulla lista dei salvataggi, se questo non è presente
+    if(!isSalvataggioInLista(nomeSalvataggio))
+        aggiungiSalvataggioLista(nomeSalvataggio);
+
     // apertura del file e verifica
     salvataggioFile = fopen(nomeSalvataggioCompleto, "wb");
-    assertPuntatoreNonNull(salvataggioFile, "\nErrore durante la scrittura del file di salvataggio.");
+    assertPuntatoreNonNull(salvataggioFile, "\nErrore durante l'apertura del file di salvataggio.");
 
     // scrittura del numero di giocatori
     write = fwrite(&salvataggio.nGiocatori, sizeof(int), 1, salvataggioFile);
@@ -149,14 +159,14 @@ void scriviSalvataggio(Salvataggio salvataggio, char nomeSalvataggio[SAVEGAME_NA
         if(salvataggio.giocatori[i].carteMano.numeroCarte > 0) {
             writeMano = fwrite(salvataggio.giocatori[i].carteMano.carte, sizeof(Carta), salvataggio.giocatori[i].carteMano.numeroCarte, salvataggioFile);
             if(writeMano != salvataggio.giocatori[i].carteMano.numeroCarte) {
-                printf("\nImpossibile scrivere le carte della mano del giocatore su file.");
+                printf("\nErrore: impossibile scrivere le carte della mano del giocatore su file.");
                 exit(-1);
             }
         }
         if(salvataggio.giocatori[i].carteGioco.numeroCarte > 0) {
             writeGioco = fwrite(salvataggio.giocatori[i].carteGioco.carte, sizeof(Carta), salvataggio.giocatori[i].carteGioco.numeroCarte, salvataggioFile);
             if(writeGioco != salvataggio.giocatori[i].carteGioco.numeroCarte) {
-                printf("\nImpossibile scrivere le carte in gioco del giocatore su file.");
+                printf("\nErrore: impossibile scrivere le carte in gioco del giocatore su file.");
                 exit(-1);
             }
         }
@@ -176,7 +186,7 @@ void scriviSalvataggio(Salvataggio salvataggio, char nomeSalvataggio[SAVEGAME_NA
     if(salvataggio.mazzoPesca.numeroCarte > 0) {
         write = fwrite(salvataggio.mazzoPesca.carte, sizeof(Carta), salvataggio.mazzoPesca.numeroCarte, salvataggioFile);
         if(write != salvataggio.mazzoPesca.numeroCarte) {
-            printf("\nImpossibile scrivere le carte del mazzo di pesca.");
+            printf("\nErrore: impossibile scrivere le carte del mazzo di pesca sul file di salvataggio.");
             exit(-1);
         }
     }
@@ -189,7 +199,7 @@ void scriviSalvataggio(Salvataggio salvataggio, char nomeSalvataggio[SAVEGAME_NA
     if(salvataggio.mazzoScarti.numeroCarte > 0) {
         write = fwrite(salvataggio.mazzoScarti.carte, sizeof(Carta), salvataggio.mazzoScarti.numeroCarte, salvataggioFile);
         if(write != salvataggio.mazzoScarti.numeroCarte) {
-            printf("\nImpossibile scrivere le carte del mazzo di scarti.");
+            printf("\nErrore: impossibile scrivere le carte del mazzo di scarti.");
             exit(-1);
         }
     }
@@ -212,6 +222,94 @@ bool salvataggioEsistente(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
     aggiungiEstensioneSalvataggio(nomeSalvataggio, nomeSalvataggioCompleto);
 
     return fileEsistente(nomeSalvataggioCompleto);
+}
+
+/**
+ * Subroutine che stampa a schermo tutti i nomi dei salvataggi attualmente presenti nella lista,
+ * contenuta nel file SAVEGAME_LIST_FILE
+ */
+void stampaSalvataggiInLista() {
+    // puntatore contenente il file con la lista dei salvataggi
+    FILE* fileLista = NULL;
+    // stringa contenente il nome del file di salvataggio che sta venendo letto al momento
+    char nomeSalvataggioCorrente[SAVEGAME_NAME_LEN + 1] = "";
+    // variabile contenente il numero di byte letti
+    int read = 0;
+
+    printf("\n%s LISTA SALVATAGGI %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
+    // creo il file con la lista se non esiste, e stampo a schermo che è vuota
+    if(!fileEsistente(SAVEGAME_LIST_FILE)) {
+        fileLista = fopen(SAVEGAME_LIST_FILE, "w");
+        assertPuntatoreNonNull(fileLista, "Errore: impossibile aprire il file di lista dei salvataggi in scrittura");
+        printf("\nLa lista dei salvataggi è vuota!");
+        fclose(fileLista);
+    } else {
+        fileLista = fopen(SAVEGAME_LIST_FILE, "r"); // apro il file in lettura
+        assertPuntatoreNonNull(fileLista, "Errore: impossibile aprire il file di lista dei salvataggi in lettura");
+
+        do {
+            read = fscanf(fileLista, "%s", nomeSalvataggioCorrente);
+            // verifico che il nome del salvataggio letto sia quello che sto cercando
+            if(read == 1)
+                printf("\n*) %s", nomeSalvataggioCorrente);
+        } while(read == 1);
+    }
+    printf("\n%s LISTA SALVATAGGI %s\n", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
+    fclose(fileLista);
+}
+
+/**
+ * Subroutine che scrive il nome di un nuovo salvataggio sulla lista.
+ *
+ * @param nomeSalvataggio Il nome del salvataggio da scrivere.
+ */
+void aggiungiSalvataggioLista(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
+    // puntatore contenente il file con la lista dei salvataggi
+    FILE* fileLista = NULL;
+
+    // apro il file di salvataggi in scrittura
+    fileLista = fopen(SAVEGAME_LIST_FILE, "a");
+    assertPuntatoreNonNull(fileLista, "Errore: impossibile aprire il file di lista dei salvataggi in scrittura");
+
+    // scrivo il salvataggio su una nuova riga
+    fprintf(fileLista, "%s\n", nomeSalvataggio);
+    fclose(fileLista);
+}
+
+/**
+ * Funzione che verifica che un salvataggio sia presente nella lista dei salvataggi.
+ *
+ * @param nomeSalvataggio Il nome del salvataggio da verificare.
+ * @return True se il salvataggio è in lista, false altrimenti.
+ */
+bool isSalvataggioInLista(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
+    // puntatore contenente il file con la lista dei salvataggi
+    FILE* fileLista = NULL;
+    // stringa contenente il nome del file di salvataggio che sta venendo letto al momento
+    char nomeSalvataggioCorrente[SAVEGAME_NAME_LEN + 1] = "";
+    // variabile contenente il numero di byte letti
+    int read = 0;
+
+    // creo il file con la lista se non esiste, e restituisco "false" dato che è vuoto
+    if(!fileEsistente(SAVEGAME_LIST_FILE)) {
+        fileLista = fopen(SAVEGAME_LIST_FILE, "w");
+        assertPuntatoreNonNull(fileLista, "Errore: impossibile aprire il file di lista dei salvataggi in scrittura");
+        fclose(fileLista);
+        return false;
+    }
+    fileLista = fopen(SAVEGAME_LIST_FILE, "r"); // apro il file in lettura
+    assertPuntatoreNonNull(fileLista, "Errore: impossibile aprire il file di lista dei salvataggi in lettura");
+
+    do {
+        read = fscanf(fileLista, "%s\n", nomeSalvataggioCorrente);
+        // verifico che il nome del salvataggio letto sia quello che sto cercando
+        if(strcmp(nomeSalvataggio, nomeSalvataggioCorrente) == 0) {
+            fclose(fileLista);
+            return true;
+        }
+    } while(read == 1);
+    fclose(fileLista);
+    return false; // il file non è stato trovato
 }
 
 /**
