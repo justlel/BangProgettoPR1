@@ -5,7 +5,7 @@
  * e restituisce una struttura avente per campi tutti i parametri di quel salvataggio.
  *
  * @param nomeSalvataggio Il nome del file in cui è contenuto il salvataggio.
- * @return Una struttura contenente il salvataggio caricato.
+ * @return Struttura contenente il salvataggio caricato.
  */
 Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
     // numero di byte letti per ogni operazione
@@ -20,7 +20,7 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
     // ottengo il nome completo del file di salvataggio
     aggiungiEstensioneSalvataggio(nomeSalvataggio, nomeSalvataggioCompleto);
 
-    // apertura del file in lettura
+    // apertura del file in lettura binaria
     salvataggioFile = fopen(nomeSalvataggioCompleto, "rb");
     assertPuntatoreNonNull(salvataggioFile, "\nImpossibile aprire il file di salvataggio.");
 
@@ -32,9 +32,9 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
         exit(-1);
     }
 
-    // alloco il numero dei giocatori nel salvataggio
+    // alloco l'array dei giocatori nel salvataggio
     salvataggio.giocatori = (Giocatore*) calloc(salvataggio.nGiocatori, sizeof(Giocatore));
-    assertPuntatoreNonNull(salvataggio.giocatori, "\nImpossibile allocare l'array di giocatori.");
+    assertPuntatoreNonNull(salvataggio.giocatori, "\nErrore: impossibile allocare dinamicamente l'array di giocatori.");
 
     // lettura dei blocchi di giocatori
     for(int i = 0; i < salvataggio.nGiocatori; i++) {
@@ -47,8 +47,10 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
         // alloco dinamicamente le altre strutture
         // lettura carte della mano del giocatore
         if(salvataggio.giocatori[i].carteMano.numeroCarte > 0) {
+            // allocazione dinamica
             salvataggio.giocatori[i].carteMano.carte = (Carta *) calloc(salvataggio.giocatori[i].carteMano.numeroCarte, sizeof(Carta));
             assertPuntatoreNonNull(salvataggio.giocatori[i].carteMano.carte, "\nImpossibile caricare dinamicamente le carte del giocatore.");
+            // lettura da file
             readMano = fread(salvataggio.giocatori[i].carteMano.carte, sizeof(Carta), salvataggio.giocatori[i].carteMano.numeroCarte, salvataggioFile);
             if(readMano != salvataggio.giocatori[i].carteMano.numeroCarte) {
                 printf("\nImpossibile leggere tutte le carte della mano del giocatore.");
@@ -57,11 +59,13 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
         }
         // lettura carte in gioco del giocatore
         if(salvataggio.giocatori[i].carteGioco.numeroCarte > 0) {
+            // allocazione dinamica
             salvataggio.giocatori[i].carteGioco.carte = (Carta *) calloc(salvataggio.giocatori[i].carteGioco.numeroCarte, sizeof(Carta));
             assertPuntatoreNonNull(salvataggio.giocatori[i].carteGioco.carte, "\nImpossibile caricare dinamicamente le carte del giocatore.");
+            // lettura da file
             readGioco = fread(salvataggio.giocatori[i].carteGioco.carte, sizeof(Carta), salvataggio.giocatori[i].carteGioco.numeroCarte, salvataggioFile);
             if(readGioco != salvataggio.giocatori[i].carteGioco.numeroCarte) {
-                printf("\nImpossibile leggere tutte le carte in gioco del giocatore.");
+                printf("\nErrore: impossibile leggere tutte le carte in gioco del giocatore.");
                 exit(-1);
             }
         }
@@ -70,20 +74,22 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
     // lettura del numero del prossimo giocatore che deve giocare
     read = fread(&salvataggio.prossimoGiocatore, sizeof(int), 1, salvataggioFile);
     if(read != 1) {
-        printf("\nErrore durante la lettura del file di salvataggio '%s': non è stato fornito il numero del prossimo giocatore.", nomeSalvataggio);
+        printf("\nErrore: impossibile leggere il numero del prossimo giocatore.");
         exit(-1);
     }
 
     // lettura del mazzo di pesca
     read = fread(&salvataggio.mazzoPesca, sizeof(Mazzo), 1, salvataggioFile);
     if(read != 1) {
-        printf("\nErrore durante la lettura del file di salvataggio '%s': non è stato fornito il mazzo di pesca.", nomeSalvataggio);
+        printf("\nErrore: impossibile leggere il mazzo di pesca.");
         exit(-1);
     }
     // lettura carte del mazzo di pesca
     if(salvataggio.mazzoPesca.numeroCarte > 0) {
+        // allocazione dinamica
         salvataggio.mazzoPesca.carte = (Carta *) calloc(salvataggio.mazzoPesca.numeroCarte, sizeof(Carta));
         assertPuntatoreNonNull(salvataggio.mazzoPesca.carte, "\nErrore: impossibile caricare le carte del mazzo di pesca.");
+        // lettura da file
         read = fread(salvataggio.mazzoPesca.carte, sizeof(Carta), salvataggio.mazzoPesca.numeroCarte, salvataggioFile);
         if(read != salvataggio.mazzoPesca.numeroCarte) {
             printf("\nImpossibile leggere tutte le carte del mazzo di pesca del giocatore.");
@@ -94,13 +100,15 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
     // lettura del mazzo di scarti
     read = fread(&salvataggio.mazzoScarti, sizeof(Mazzo), 1, salvataggioFile);
     if(read != 1) {
-        printf("\nErrore durante la lettura del file di salvataggio '%s': non è stato fornito il mazzo di scarti.", nomeSalvataggio);
+        printf("\nErrore: impossibile leggere il mazzo di scarti.");
         exit(-1);
     }
     // lettura carte del mazzo di scarti
     if(salvataggio.mazzoScarti.numeroCarte > 0) {
+        // allocazione dinamica
         salvataggio.mazzoScarti.carte = (Carta *) calloc(salvataggio.mazzoScarti.numeroCarte, sizeof(Carta));
         assertPuntatoreNonNull(salvataggio.mazzoScarti.carte, "\nErrore: impossibile caricare le carte del mazzo di scarti.");
+        // lettura da file
         read = fread(salvataggio.mazzoScarti.carte, sizeof(Carta), salvataggio.mazzoScarti.numeroCarte, salvataggioFile);
         if(read != salvataggio.mazzoScarti.numeroCarte) {
             printf("\nImpossibile leggere tutte le carte del mazzo di scarti del giocatore.");
@@ -108,23 +116,23 @@ Salvataggio caricaSalvataggio(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
         }
     }
 
-    // aggiunta del nome del salvataggio
+    // aggiunta del nome del salvataggio alla struttura
     strcpy(salvataggio.nomeSalvataggio, nomeSalvataggio);
 
     // chiusura del file
     fclose(salvataggioFile);
 
-    // restituisci la struct del salvataggio letto
+    // restituisci il puntatore al salvataggio letto
     return salvataggio;
 }
 
 /**
  * Subroutine che scrive una struct "Salvataggio" sul file con il nome fornito.
  *
- * @param salvataggio
- * @param nomeSalvataggio
+ * @param salvataggio Il salvataggio da scrivere.
+ * @param nomeSalvataggio Il nome del salvataggio da scrivere.
  */
-void scriviSalvataggio(Salvataggio salvataggio, char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
+void scriviSalvataggio(Salvataggio salvataggio, char nomeSalvataggio[]) {
     // numero di byte scritti per ogni operazione
     size_t write, writePlayer, writeMano, writeGioco;
     // file da aprire per la scrittura
@@ -234,7 +242,7 @@ void stampaSalvataggiInLista() {
     // stringa contenente il nome del file di salvataggio che sta venendo letto al momento
     char nomeSalvataggioCorrente[SAVEGAME_NAME_LEN + 1] = "";
     // variabile contenente il numero di byte letti
-    int read = 0;
+    int read;
 
     printf("\n%s LISTA SALVATAGGI %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
     // creo il file con la lista se non esiste, e stampo a schermo che è vuota
@@ -318,7 +326,7 @@ bool isSalvataggioInLista(char nomeSalvataggio[SAVEGAME_NAME_LEN + 1]) {
  * @param nomeFile Il nome del file da verificare.
  * @return True se il file esiste, False altrimenti.
  */
-bool fileEsistente(char nomeFile[SAVEGAME_NAME_LEN + SAVEGAME_EXT_LEN + 1]) {
+bool fileEsistente(char* nomeFile) {
     FILE* fp = fopen(nomeFile, "r");
     // se fp == NULL, allora il file non esiste. la modalità in lettura non crea il salvataggio
     if(fp) {

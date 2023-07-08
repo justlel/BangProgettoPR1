@@ -9,6 +9,8 @@ int main() {
     // inizializzazione del seed per la generazione randomica
     srand(time(NULL));
 
+    pulisciLog(); // pulisco i log
+
     avvioGioco();
 
     return 0;

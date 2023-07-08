@@ -43,7 +43,7 @@ typedef enum {CUORI, QUADRI, FIORI, PICCHE} semiCarta;
  * * Il seme della carta, ossia uno dei valori dell'enum 'semiCarta'
  */
 typedef struct {
-    char nomeCarta[NOME_CARTA_LEN+1];
+    char nomeCarta[NOME_CARTA_LEN + 1];
     tipologieCarta tipologiaCarta;
     int numeroCarta;
     semiCarta semeCarta;

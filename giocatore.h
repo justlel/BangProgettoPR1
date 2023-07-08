@@ -1,4 +1,4 @@
-#include "mazzo.h"
+#include "log.h"
 #include "string.h"
 #include "utils.h"
 
@@ -8,8 +8,8 @@
 #define PROMPT_CONFERMA 'y'
 #define PROMPT_RIFIUTA 'n'
 
-#define PROMPT_VERO 'S'
-#define PROMPT_FALSO 'N'
+#define PROMPT_MAZZO_MANO 'M'
+#define PROMPT_MAZZO_GIOCO 'G'
 
 /**
  * Intero contenente la lunghezza massima del nome di un giocatore ('\0' escluso)
@@ -63,30 +63,32 @@ typedef struct {
 
 // FUNZIONI SULLE DISTANZE TRA GIOCATORI
 int* calcolaDistanzeGiocatori(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore);
-int calcolaDistanzaGiocatore(Giocatore giocatori[], int posizioneGiocatore1, int posizioneGiocatore2);
-void mostraDistanze(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore);
+int calcolaDistanzaGiocatore(int nGiocatori, Giocatore giocatori[], int posizioneGiocatore1, int posizioneGiocatore2);
+void mostraDistanze(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore);
 
 // FUNZIONI SULLE CARTE DEI GIOCATORI
 // SUBROUTINE VISIVE
 void mostraCarteInGiocoAltri(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore);
 // FUNZIONI
-bool possiedeCartaInGioco(Giocatore giocatore, char nomeCarta[NOME_CARTA_LEN + 1]);
+bool possiedeCartaInGioco(Giocatore giocatore, char nomeCarta[]);
 
 bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore, int posizioneCarta);
 
 void pescaCarte(Mazzo *mazzoPesca, Mazzo *mazzoScarti, Giocatore *giocatore, int nCarte);
-void scartaCarta(Mazzo* mazzoMano, Mazzo* mazzoScarti);
+void scartaCarta(Giocatore *giocatore, Mazzo *mazzoDaScartare, Mazzo *mazzoScarti);
 
 void aggiungiCartaInGioco(Giocatore* giocatoreCarta, Giocatore* giocatoreBersaglio, int posizioneCarta);
-Carta* prendiArmaGiocatore(Giocatore *giocatore);
+Carta prendiArmaGiocatore(Giocatore giocatore);
 
 // FUNZIONI SUI GIOCATORI
 void
 rimuoviPuntiVita(Giocatore *giocatoreFerito, Giocatore *giocatoreAttaccante, int puntiVitaRimossi, Mazzo *mazzoPesca,
-                 Mazzo *mazzoScarti);  // TODO: Da implementare, con la logica della morte
-void prendiNomeRuolo(Ruoli ruoli, char nomeRuolo[NOME_RUOLO_LEN_MAX + 1]);
+                 Mazzo *mazzoScarti);
+void prendiNomeRuolo(Ruoli ruoli, char nomeRuolo[]);
 int prendiVitaMassima(Giocatore giocatore);
-int calcolaGittata(Giocatore *giocatore);
+int calcolaGittata(Giocatore giocatore);
 void mostraVitaGiocatori(int nGiocatori, Giocatore giocatori[nGiocatori]);
+
+bool esisteGiocatoreVicino(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore, int distanza);
 
 Giocatore *selezionaGiocatore(int nGiocatori, Giocatore giocatori[nGiocatori], int posizioneGiocatore, bool mostraDistanze, bool calcolaDistanze);

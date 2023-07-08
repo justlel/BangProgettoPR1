@@ -24,7 +24,7 @@ Mazzo caricaMazzo() {
     // apertura del file
     fileMazzo = fopen("mazzo_bang.txt", "r");
     // verifica della corretta apertura
-    assertPuntatoreNonNull(fileMazzo, "\nErrore: impossibile aprire il file contenente le carte del mazzo. Arresto.");
+    assertPuntatoreNonNull(fileMazzo, "\nErrore: impossibile aprire il file contenente le carte del mazzo.");
 
     // inizializzazione del mazzo che sarà poi restituito dalla funzione
     Mazzo mazzo = {MAZZO_PESCA, 0, NULL};
@@ -37,10 +37,14 @@ Mazzo caricaMazzo() {
         // se sono stati letti 4 byte, significa che c'è una nuova carta da aggiungere al mazzo
         if(read == 4) {
             mazzo.numeroCarte += 1;
-            // riallocazione dinamica del puntatore alle carte del mazzo, per fare spazio alla nuova carta letta
-            carteMazzo = (Carta*) realloc(carteMazzo, mazzo.numeroCarte * sizeof(Carta));
+            // allocazione dinamica del puntatore alle carte del mazzo, per fare spazio alla nuova carta letta
+            if(mazzo.numeroCarte == 0) { // se questa è la prima carta, allora alloco dinamicamente
+                carteMazzo = (Carta*) calloc(mazzo.numeroCarte, sizeof(Carta));
+            } else { // altrimenti, rialloco
+                carteMazzo = (Carta*) realloc(carteMazzo, mazzo.numeroCarte * sizeof(Carta));
+            }
             // verifica della corretta allocazione dinamica
-            assertPuntatoreNonNull(carteMazzo, "\nErrore: impossibile allocare dinamicamente il mazzo di carte. Arresto.");
+            assertPuntatoreNonNull(carteMazzo, "\nErrore: impossibile allocare dinamicamente il mazzo di carte.");
 
             // l'ultima carta letta diventa l'ultima carta del mazzo
             carteMazzo[mazzo.numeroCarte - 1] = cartaLetta;
@@ -71,96 +75,17 @@ Mazzo caricaMazzo() {
 void mischiaMazzo(Mazzo* mazzo) {
     int shuffled; // indice della carta estratta per essere scambiata con quella iterata nel ciclo
     Carta tmpShuffled; // carta che sarà scambiata con quella estratta randomicamente
+
     for(int i = 0; i < mazzo->numeroCarte; i++) {
         do {
             shuffled = rand() % mazzo->numeroCarte; // estrazione di un indice tra 0 e numeroCarte - 1
         } while(shuffled == i); // evito che la carta estratta per essere scambiata sia la stessa di quella iterata
+
         // scambio delle due carte
         tmpShuffled = mazzo->carte[i];
         mazzo->carte[i] = mazzo->carte[shuffled];
         mazzo->carte[shuffled] = tmpShuffled;
     }
-}
-
-/**
- * Funzione che pesca un numero dato di carte dalla cima di un mazzoPesca.
- * Restituisce un puntatore a un array contenente le carte pescate dal mazzo di pesca.
- *
- * @param mazzoPesca Puntatore al mazzo di pesca, da cui pescare.
- * @param mazzoScarti Puntatore al mazzo di scarti.
- * @param numeroCarteDaPescare Il numero di carte da pescare.
- * @return Puntatore all'array contenente le carte pescate, di dimensione 'numeroCarteDaPescare'.
- */
-Carta *pescaCimaMazzo(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int numeroCarteDaPescare) {
-    // TODO: cosa fare se finiscono le carte del mazzoPesca?
-    int i, j, carteRimanenti;
-    Carta *cartePescate = NULL, *ultimeCarte = NULL, *primeCarte = NULL;
-
-    // alloco dinamicamente un array che contiene le carte che saranno pescate dal 'mazzoPesca'
-    cartePescate = (Carta*) calloc(numeroCarteDaPescare, sizeof(Carta));
-    if(cartePescate == NULL) {
-        printf("Errore: impossibile allocare dinamicamente il mazzoPesca di carte scartato. Arresto.");
-        exit(-1); // TODO: utils
-    }
-
-    // se le carte da pescare sono maggiori del numero di carte del mazzo, allora si pescano le rimanenti,
-    // si riempie il mazzo di pesca con il mazzo degli scarti (rimischiato) e si pescano le carte mancanti
-    if(numeroCarteDaPescare > mazzoPesca->numeroCarte) {
-        // allocazione dinamica per gli array supplementari delle carte da pescare
-        ultimeCarte = (Carta*) calloc(mazzoPesca->numeroCarte, sizeof(Carta));
-        primeCarte  = (Carta*) calloc(numeroCarteDaPescare - mazzoPesca->numeroCarte, sizeof(Carta));
-        if(ultimeCarte == NULL || primeCarte == NULL) {
-            printf("Errore: impossibile allocare dinamicamente gli array delle carte da pescare.");
-            exit(-1);
-        }
-
-        printf("\nIl mazzo di pesca è vuoto! Rigenerazione dal mazzo di scarti in corso...");
-        // chiamata ricorsiva per pescare le ultime carte del mazzo
-        ultimeCarte = pescaCimaMazzo(mazzoPesca, mazzoScarti, mazzoPesca->numeroCarte);
-        // segno da parte il numero delle carte che devono ancora essere pescate
-        carteRimanenti = numeroCarteDaPescare - mazzoPesca->numeroCarte;
-
-        // le carte del mazzo di scarti diventano quelle del mazzo di pesca, e vengono mischiate
-        mazzoPesca->carte = mazzoScarti->carte;
-        mischiaMazzo(mazzoPesca);
-
-        // svuoto il mazzo degli scarti
-        mazzoScarti->numeroCarte = 0;
-        mazzoScarti->carte = (Carta*) calloc(sizeof(Carta), 0);
-
-        // pesco le carte rimanenti da prima
-        primeCarte = pescaCimaMazzo(mazzoPesca, mazzoScarti, carteRimanenti);
-        // infine, unisco le carte pescate prima e dopo la rigenerazione del mazzo
-        for(i = 0; i < numeroCarteDaPescare - carteRimanenti; i++) {
-            cartePescate[i] = ultimeCarte[i];
-        }
-        for(i = numeroCarteDaPescare - carteRimanenti, j = 0; i < numeroCarteDaPescare && j < (numeroCarteDaPescare - carteRimanenti); i++, j++) {
-            cartePescate[i] = primeCarte[j];
-        }
-
-        // free
-        free(ultimeCarte);
-        free(primeCarte);
-    // pesca standard
-    } else {
-        // inserisco le carte pescate in un array
-        for(i = mazzoPesca->numeroCarte - 1; i >= 0; i--) {
-            cartePescate[i] = mazzoPesca->carte[i];
-        }
-    }
-
-
-    // riduco il 'mazzoPesca' togliendo le carte pescate
-    mazzoPesca->carte = (Carta*) realloc(mazzoPesca->carte, (mazzoPesca->numeroCarte - numeroCarteDaPescare) * sizeof(Carta));
-    if(mazzoPesca->carte == NULL) {
-        printf("Errore: impossibile allocare dinamicamente il mazzoPesca di carte scartato. Arresto.");
-        exit(-1); // TODO: utils
-    }
-    // diminuisco il numero di carte presenti nel 'mazzoPesca'
-    mazzoPesca->carte -= numeroCarteDaPescare;
-
-    // restituisco le carte pescate
-    return cartePescate;
 }
 
 /**
@@ -181,8 +106,7 @@ Carta estraiCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti) {
     cartaEstratta = mazzoPesca->carte[mazzoPesca->numeroCarte - 1];
 
     // sposto la carta dal mazzo di pesca al mazzo degli scarti
-    aggiungiCartaMazzo(mazzoScarti, cartaEstratta);
-    rimuoviCartaMazzo(mazzoPesca, mazzoPesca->numeroCarte - 1);
+    spostaCartaMazzo(mazzoPesca, mazzoScarti, mazzoPesca->numeroCarte - 1);
 
     // restituisco la carta estratta
     return cartaEstratta;
@@ -196,7 +120,7 @@ Carta estraiCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti) {
  * @param nomeCarta Il nome della carta da cercare
  * @return L'indice della carta se viene trovata, -1 altrimenti
  */
-int cercaCartaMazzoPerNome(Mazzo mazzo, char nomeCarta[NOME_CARTA_LEN + 1]) {
+int cercaCartaMazzoPerNome(Mazzo mazzo, char nomeCarta[]) {
     int i;
 
     for(i = 0; i < mazzo.numeroCarte; i++) {
@@ -217,7 +141,7 @@ void rimuoviCartaMazzo(Mazzo* mazzo, int posizioneCarta) {
     //assertPuntatoreNonNull(nuovoMazzo, "\nImpossibile allocare dinamicamente memoria.");
 
     // se il mazzo è vuoto, libero la memoria
-    if(mazzo->numeroCarte == 0) {
+    if(mazzo->numeroCarte == 0 && mazzo->carte != NULL) {
         free(mazzo->carte);
         mazzo->carte = NULL;
     } else if(mazzo->numeroCarte > 0) {
@@ -235,20 +159,45 @@ void rimuoviCartaMazzo(Mazzo* mazzo, int posizioneCarta) {
     }
 }
 
+/**
+ * Subroutine che aggiunge una carta sulla cima di un mazzo fornito.
+ * Se la carta è la prima ad essere aggiunta, la funzione inizializza il campo "carte" della struttura "mazzo"
+ * allocandone dinamicamente la memoria.
+ * Se la carta non è la prima ad essere aggiunta, allora la funzione allarga la dimensione dell'array di un'unità.
+ *
+ * @param mazzo Puntatore al mazzo di carte a cui si vuole aggiungere una carta.
+ * @param carta La carta che si intende aggiungere al mazzo
+ */
 void aggiungiCartaMazzo(Mazzo* mazzo, Carta carta) {
     // allargamento del mazzo di carte per far spazio alla nuova carta
     mazzo->numeroCarte++;
 
     // allocazione dinamica e verifica
-    if(mazzo->carte == NULL) {
-        mazzo->carte = (Carta*) malloc(sizeof(Carta));
-    } else {
+    if(mazzo->numeroCarte > 0 && mazzo->carte == NULL) { // primo caso, il mazzo è nullo, quindi lo alloco dinamicamente
+        mazzo->carte = (Carta*) calloc(mazzo->numeroCarte, sizeof(Carta));
+    } else if(mazzo->numeroCarte > 0 && mazzo->carte != NULL) { // secondo caso, il mazzo ha già delle carte, quindi rialloco soltanto
         mazzo->carte = (Carta*) realloc(mazzo->carte, mazzo->numeroCarte * sizeof(Carta));
+    } else { // terzo caso, un ibrido tra i due, quindi non posso allocare correttamente (il mazzo dovrebbe avere già una carta, ma il puntatore è NULL)
+        printf("\nErrore: il numero di carte del mazzo è %d, ma il puntatore contenente le carte è nullo.", mazzo->numeroCarte);
+        exit(-1);
     }
-    assertPuntatoreNonNull(mazzo->carte, "\nErrore: impossibile allocare dinamicamente.");
+    assertPuntatoreNonNull(mazzo->carte, "\nErrore: impossibile effettuare l'allocazione dinamica del mazzo dopo l'aggiunta di una carta.");
 
-    // aggiunta della nuova carta
+    // aggiunta della nuova carta alla cima del mazzo
     mazzo->carte[mazzo->numeroCarte - 1] = carta;
+}
+
+/**
+ * Subroutine che sposta una carta da un mazzo all'altro.
+ * Equivalente ad effettuare aggiungiCarta(partenza, Carta) && rimuoviCarta(destinazione, Carta).
+ *
+ * @param partenza Puntatore al mazzo da cui spostare la carta.
+ * @param destinazione Puntatore al mazzo in cui spostare la carta.
+ * @param posizioneCarta Posizione della carta da spostare da un mazzo all'altro.
+ */
+void spostaCartaMazzo(Mazzo* partenza, Mazzo* destinazione, int posizioneCarta) {
+    aggiungiCartaMazzo(destinazione, partenza->carte[posizioneCarta]);
+    rimuoviCartaMazzo(partenza, posizioneCarta);
 }
 
 /**
@@ -289,4 +238,28 @@ void mostraCarteMazzo(Mazzo mazzo) {
     }
 
     printf("%s-------%s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
+}
+
+/**
+ * Subroutine che scambia le carte del mazzo di pesca con quelle del mazzo di scarti.
+ * Deve essere chiamata solo se il mazzo di pesca è vuoto, altrimenti genera un errore.
+ *
+ * @param mazzoPesca Puntatore al mazzo di pesca.
+ * @param mazzoScarti Puntatore al mazzo di scarti.
+ */
+void scambiaPescaScarti(Mazzo* mazzoPesca, Mazzo* mazzoScarti) {
+    printf("\nIl mazzo di pesca è vuoto! Rigenerazione dal mazzo di scarti in corso...");
+
+    if(mazzoPesca->numeroCarte != 0) {
+        printf("\nErrore: non è possibile scambiare il mazzo di pesca con quello di scarti se il primo non è vuoto.");
+        exit(-1);
+    }
+
+    // scambio dei mazzi
+    mazzoPesca->carte = mazzoScarti->carte;
+    mazzoPesca->numeroCarte = mazzoScarti->numeroCarte;
+    mazzoScarti->carte = NULL; // se mazzoPesca è vuoto, mazzoPesca.carte è NULL, quindi non è necessario liberare la memoria.
+    mazzoScarti->numeroCarte = 0;
+    // mischio il mazzo di pesca nuovo
+    mischiaMazzo(mazzoPesca);
 }

@@ -60,4 +60,5 @@ void avviaPartita(Salvataggio partita);
 bool partitaTerminata(Salvataggio partita, Ruoli* ruoloVincitore);
 void chiudiPartita(Ruoli ruoloVincitore);
 
-void chiudiGioco();
+void chiudiGioco(Salvataggio* partita);
+void liberaStrutture(Salvataggio* partita);
