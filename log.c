@@ -6,7 +6,7 @@
  *
  * @param Il turno corrente.
  */
-void scriviInizioTurno(int turno) {
+void scriviInizioTurnoSuLog(int turno) {
     // puntatore al file contenente i log
     FILE* logFile = NULL;
 
@@ -175,7 +175,7 @@ void scriviCartaScartataSuLog(char nomeGiocatore[], Carta carta) {
  * @param nomeAttaccato Il nome del giocatore a cui è rubata la carta.
  * @param cartaRubata La carta rubata.
  */
-void scriviCartaRubataPanico(char nomeGiocatore[], char nomeAttaccato[], Carta cartaRubata) {
+void scriviCartaRubataPanicoSuLog(char nomeGiocatore[], char nomeAttaccato[], Carta cartaRubata) {
     // puntatore al file contenente i log
     FILE* logFile = NULL;
 
@@ -191,9 +191,10 @@ void scriviCartaRubataPanico(char nomeGiocatore[], char nomeAttaccato[], Carta c
 }
 
 /**
+ * Subroutine che scrive su log quando viene estratta una carta per effetto di un barile.
  *
- * @param nomeGiocatore
- * @param cartaEstratta
+ * @param nomeGiocatore Il nome del giocatore che estrae.
+ * @param cartaEstratta La carta estratta.
  */
 void scriviBarileSuLog(char nomeGiocatore[], Carta cartaEstratta) {
     // puntatore al file contenente i log
@@ -311,6 +312,28 @@ void scriviCartePescateSuLog(char nomeGiocatore[], Mazzo mazzoMano, int nCarte) 
     fclose(logFile);
 }
 
+/**
+ * Subroutine che scrive la vittoria di un ruolo nel file di log.
+ *
+ * @param nomeVincitori Il nome del ruolo dei vincitori
+ */
+void scriviVittoriaSuLog(char nomeVincitori[]) {
+    // puntatore al file contenente i log
+    FILE* logFile = NULL;
+
+    // apertura del file di log
+    logFile = fopen(LOG_FILE_NAME, "a");
+    assertPuntatoreNonNull(logFile, "\nErrore: impossibile aprire il file di log.");
+
+    // stampo il nome dei vincitori
+    fprintf(logFile, "VITTORIA! La partita è terminata, ed è stata vinta dai '%s'\n", nomeVincitori);
+
+    fclose(logFile);
+}
+
+/**
+ * Subroutine che si occupa di cancellare il contenuto di un file di log a inizio partita.
+ */
 void pulisciLog() {
     // puntatore al file contenente i log
     FILE* logFile = NULL;

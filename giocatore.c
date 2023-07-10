@@ -244,6 +244,8 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
             // logging
             scriviCartaGiocataAvversarioSuLog(giocatore->nomeUtente, giocatoreScelto->nomeUtente, carta);
 
+            svuotaBuffer();
+
             // verifica di eventuali azioni per evitare lo sparo
             // primo elemento: carta barile
             if (possiedeCartaInGioco(*giocatoreScelto, CARTA_BARILE)) {
@@ -251,8 +253,6 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                        "del seme di Cuori, annullerà completamente l'attacco.", giocatoreScelto->nomeUtente, CARTA_BARILE);
 
                 printf("\nPremi 'Invio' per estrarre una carta.");
-                while (getchar() != '\n') // aspetto che il giocatore prema invio
-                    continue;
                 getchar();
 
                 // estraggo una carta (che sarà spostata nel mazzo scarti) attraverso la funzione 'estraiCarta'.
@@ -266,41 +266,39 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                 } else {
                     printf("\nLa carta estratta non è una carta di Cuori!");
                 }
+            }
 
-                // secondo elemento: carta mancato
-                int cartaMancato = cercaCartaMazzoPerNome(giocatoreScelto->carteMano, CARTA_MANCATO);
-                // il giocatore possiede un 'Mancato!'
-                if (cartaMancato != -1) {
-                    svuotaSchermo();
-                    printf("\nIl giocatore %s possiede una carta '%s'! Se deciderà di giocarla, potrà evitare l'attacco.", giocatoreScelto->nomeUtente, CARTA_MANCATO);
-                    printf("\nPassa lo schermo a %s per permettergli di scegliere se giocare la carta.\n"
-                           "Premi 'Invio' per continuare.", giocatoreScelto->nomeUtente);
-                    while (getchar() != '\n') // aspetto che il giocatore sia sullo schermo
-                        continue;
-                    getchar();
+            // secondo elemento: carta mancato
+            int cartaMancato = cercaCartaMazzoPerNome(giocatoreScelto->carteMano, CARTA_MANCATO);
+            // il giocatore possiede un 'Mancato!'
+            if (cartaMancato != -1) {
+                svuotaSchermo();
+                printf("\nIl giocatore %s possiede una carta '%s'! Se deciderà di giocarla, potrà evitare l'attacco.", giocatoreScelto->nomeUtente, CARTA_MANCATO);
+                printf("\nPassa lo schermo a %s per permettergli di scegliere se giocare la carta.\n"
+                       "Premi 'Invio' per continuare.", giocatoreScelto->nomeUtente);
+                getchar();
 
-                    do {
-                        printf("\n%s ha giocato una carta '%s' contro di te: desideri scartare una carta '%s' ed evitare l'attacco?\n"
-                               "%c/%c) ", giocatore->nomeUtente, CARTA_BANG, CARTA_MANCATO, PROMPT_CONFERMA, PROMPT_RIFIUTA);
-                        scanf(" %c", &confermaAzione);
-                        if (confermaAzione != PROMPT_CONFERMA && confermaAzione != PROMPT_RIFIUTA)
-                            printf("\nInserisci un valore valido!");
-                    } while (confermaAzione != PROMPT_CONFERMA && confermaAzione != PROMPT_RIFIUTA);
+                do {
+                    printf("\n%s ha giocato una carta '%s' contro di te: desideri scartare una carta '%s' ed evitare l'attacco?\n"
+                           "%c/%c) ", giocatore->nomeUtente, CARTA_BANG, CARTA_MANCATO, PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                    scanf(" %c", &confermaAzione);
+                    if (confermaAzione != PROMPT_CONFERMA && confermaAzione != PROMPT_RIFIUTA)
+                        printf("\nInserisci un valore valido!");
+                } while (confermaAzione != PROMPT_CONFERMA && confermaAzione != PROMPT_RIFIUTA);
 
-                    // verifico la scelta del giocatore attaccato
-                    if(confermaAzione == PROMPT_CONFERMA) {
-                        printf("\n%s ha giocato un '%s' ed evita l'attacco!", giocatoreScelto->nomeUtente, CARTA_MANCATO);
+                // verifico la scelta del giocatore attaccato
+                if(confermaAzione == PROMPT_CONFERMA) {
+                    printf("\n%s ha giocato un '%s' ed evita l'attacco!", giocatoreScelto->nomeUtente, CARTA_MANCATO);
 
-                        // scarto la carta 'Mancato!' appena giocata
-                        spostaCartaMazzo(&giocatoreScelto->carteMano, mazzoScarti, cartaMancato);
+                    // scarto la carta 'Mancato!' appena giocata
+                    spostaCartaMazzo(&giocatoreScelto->carteMano, mazzoScarti, cartaMancato);
 
-                        // logging
-                        scriviMancatoSuLog(giocatore->nomeUtente);
+                    // logging
+                    scriviMancatoSuLog(giocatore->nomeUtente);
 
-                        return true; // la carta 'Bang!' è stata comunque giocata, quindi termino la funzione
-                    } else {
-                        printf("\n%s ha deciso di non giocare un '%s'!", giocatoreScelto->nomeUtente, CARTA_MANCATO);
-                    }
+                    return true; // la carta 'Bang!' è stata comunque giocata, quindi termino la funzione
+                } else {
+                    printf("\n%s ha deciso di non giocare un '%s'!", giocatoreScelto->nomeUtente, CARTA_MANCATO);
                 }
             }
 
@@ -323,6 +321,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                 printf("\nHai già il massimo della vita!");
                 return false; // la carta non può essere giocata
             }
+            svuotaBuffer();
         } else if (strcmp(carta.nomeCarta, CARTA_DILIGENZA) == 0) {
             printf("\n%s DESCRIZIONE %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
             printf("\nLa carta '%s' ti permette di pescare 2 carte!", CARTA_DILIGENZA);
@@ -333,6 +332,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
             scriviCartaGiocataSuLog(giocatore->nomeUtente, carta);
             // faccio pescare le carte al giocatore
             pescaCarte(mazzoPesca, mazzoScarti, &giocatori[posizioneGiocatore], 2);
+            svuotaBuffer();
         } else if (strcmp(carta.nomeCarta, CARTA_PANICO) == 0) {
             // posizione della carta del mazzo che si vuole rubare
             int posizioneCartaDaRubare = 0;
@@ -383,11 +383,12 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                         // se preferisce sceglierne un altro o tornare al menu principale
                         if(giocatoreScelto == NULL) {
                             do {
-                                printf("\nIl giocatore scelto non è valido. Vuoi sceglierne un altro?\n"
+                                printf("\nVuoi scegliere un altro giocatore?\n"
                                        "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
                                 scanf(" %c", &confermaAzione);
                                 if(confermaAzione == PROMPT_RIFIUTA) {
-                                    printf("\nT, PROMPT_MAZZO_MANO, PROMPT_MAZZO_GIOCOorno al menu principale!");
+                                    printf("\nTorno al menu principale!");
+                                    svuotaBuffer();
                                     return false; // la carta non è stata giocata
                                 } else if(confermaAzione != PROMPT_CONFERMA && confermaAzione != PROMPT_RIFIUTA) {
                                     printf("\nInserisci un azione valida!");
@@ -410,6 +411,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                             scanf(" %c", &confermaAzione);
                             if(confermaAzione == PROMPT_CONFERMA) {
                                 printf("\nTorno al menu principale!");
+                                svuotaBuffer();
                                 return false; // la carta non è stata giocata
                             } else if(confermaAzione == PROMPT_RIFIUTA) {
                                 giocatoreScelto = NULL; // annullo la scelta precedente per permetterne un'altra
@@ -496,6 +498,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                                     scanf(" %c", &confermaAzione);
                                     if(confermaAzione == PROMPT_RIFIUTA) {
                                         printf("\nTorno al menu principale!");
+                                        svuotaBuffer();
                                         return false; // la carta non è stata giocata
                                     } else if(confermaAzione == PROMPT_CONFERMA) {
                                         printf("\nBene, scegli un altro giocatore!");
@@ -516,14 +519,16 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                 } while(giocatoreScelto == NULL);
 
                 // logging
-                scriviCartaRubataPanico(giocatore->nomeUtente, giocatoreScelto->nomeUtente, mazzoScelto->carte[posizioneCartaDaRubare - 1]);
+                scriviCartaRubataPanicoSuLog(giocatore->nomeUtente, giocatoreScelto->nomeUtente,
+                                             mazzoScelto->carte[posizioneCartaDaRubare - 1]);
 
                 // la scelta è stata confermata, quindi rimuovo la carta dal mazzo da rubare e la aggiungo a quello del giocatore
                 printf("\n%s ruba una carta '%s' a %s!", giocatore->nomeUtente, cartaDaRubare->nomeCarta, giocatoreScelto->nomeUtente);
                 spostaCartaMazzo(mazzoScelto, &giocatore->carteMano, posizioneCartaDaRubare - 1);
-
+                svuotaBuffer();
             } else {
                 printf("\nNon esiste nessun giocatore a distanza uno!");
+                svuotaBuffer();
                 return false; // la carta non è stata giocata
             }
         } else if (strcmp(carta.nomeCarta, CARTA_CATBALOU) == 0) {
@@ -556,6 +561,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                             scanf(" %c", &confermaAzione);
                             if (confermaAzione == PROMPT_RIFIUTA) {
                                 printf("\nTorno al menu principale!");
+                                svuotaBuffer();
                                 return false;
                             } else {
                                 printf("\nScegli un altro giocatore!");
@@ -575,6 +581,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                         scanf(" %c", &confermaAzione);
                         if(confermaAzione == PROMPT_RIFIUTA) {
                             printf("\nTorno al menu principale!");
+                            svuotaBuffer();
                             return false;
                         } else if(confermaAzione == PROMPT_CONFERMA) {
                             giocatoreScelto = NULL; // annullo la scelta precedente per ripetere la richiesta del giocatore
@@ -594,8 +601,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                    giocatoreScelto->nomeUtente);
             printf("\nPassa lo schermo a %s per permettergli di scegliere quale carta scartare.\n"
                    "Premi 'Invio' appena sei pronto.", giocatoreScelto->nomeUtente);
-            while (getchar() != '\n') // aspetto che l'utente prema invio
-                continue;
+            svuotaBuffer();
             getchar();
 
             do {
@@ -629,6 +635,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
 
             svuotaSchermo();
             printf("\n%s ha scartato una carta per effetto di un '%s'!", giocatoreScelto->nomeUtente, CARTA_CATBALOU);
+            svuotaBuffer();
 
         } else if (strcmp(carta.nomeCarta, CARTA_MANCATO) == 0) {
             printf("\n%s DESCRIZIONE %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
@@ -636,6 +643,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
             printf("\n%s DESCRIZIONE %s\n", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
 
             printf("\nNon puoi giocare questa carta direttamente, ma solo quando stai subendo uno sparo!");
+            svuotaBuffer();
             return false; // questa carta non può essere giocata dalla mano
         } else if (strcmp(carta.nomeCarta, CARTA_GATLING) == 0) {
             printf("\n%s DESCRIZIONE %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
@@ -652,6 +660,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                     rimuoviPuntiVita(&giocatori[i], giocatore, 1, mazzoPesca, mazzoScarti);
                 }
             }
+            svuotaBuffer();
         } else if (strcmp(carta.nomeCarta, CARTA_SALOON) == 0) {
             printf("\n%s DESCRIZIONE %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
             printf("\nLa carta '%s' ti permette di aggiungere a ogni giocatore un punto vita.", CARTA_SALOON);
@@ -666,6 +675,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                 if (giocatori[i].puntiVita > 0 && giocatori[i].puntiVita < prendiVitaMassima(giocatori[i]))
                     giocatori[i].puntiVita++;
             }
+            svuotaBuffer();
         } else if (strcmp(carta.nomeCarta, CARTA_WELLSFARGO) == 0) {
             printf("\n%s DESCRIZIONE %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
             printf("\nLa carta '%s' ti permette di pescare 3 carte.", CARTA_WELLSFARGO);
@@ -675,6 +685,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
             // logging
             scriviCartaGiocataSuLog(giocatore->nomeUtente, carta);
             pescaCarte(mazzoPesca, mazzoScarti, &giocatori[posizioneGiocatore], 3);
+            svuotaBuffer();
         }
     // SECONDA PARTE: carte istantanee speciali
     } else if (carta.tipologiaCarta == ISTANTANEA_SPECIAL) {
@@ -712,6 +723,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                         scanf(" %c", &confermaAzione);
                         if (confermaAzione == PROMPT_RIFIUTA) {
                             printf("\nTorno al menu principale!");
+                            svuotaBuffer();
                             return false; // la carta non è stata giocata
                         } else if(confermaAzione != PROMPT_RIFIUTA && confermaAzione != PROMPT_CONFERMA) {
                             printf("\nInserisci un valore valido!");
@@ -732,8 +744,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
             duellanteTurnoCorrente = giocatoreScelto;
 
             // svuoto il buffer
-            while (getchar() != '\n')
-                continue;
+            svuotaBuffer();
             do {
                 printf("\nE' il turno di %s!", duellanteTurnoCorrente->nomeUtente);
                 printf("\nPremi invio per continuare.");
@@ -843,8 +854,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
             // il ciclo si ripete finché tutti i giocatori non hanno estratto almeno una carta
             while (nCarteRivelate > 0) {
                 printf("\nTocca a %s pescare! Passagli lo schermo, e premi 'Invio' appena sei pronto.", giocatori[j].nomeUtente);
-                while (getchar() != '\n')
-                    continue;
+                svuotaBuffer();
                 getchar(); // aspetto che venga premuto invio
                 svuotaSchermo();
 
@@ -901,6 +911,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
             }
 
             printf("\nEstrazione terminata!");
+            svuotaBuffer();
 
         } else if (strcmp(carta.nomeCarta, CARTA_INDIANI) == 0) {
             // variabile d'appoggio che contiene la posizione della carta 'Bang!' di ogni giocatore.
@@ -916,8 +927,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
             scriviCartaGiocataSuLog(giocatore->nomeUtente, carta);
 
             // pulisco il buffer
-            while (getchar() != '\n')
-                continue;
+            svuotaBuffer();
             for (i = 0; i < nGiocatori; i++) {
                 // il giocatore deve essere in vita, e chi ha giocato la carta non viene attaccato
                 if (i != posizioneGiocatore && giocatori[i].puntiVita > 0) {
@@ -954,6 +964,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                        "%c/%c) ", armaInUso.nomeCarta, PROMPT_CONFERMA, PROMPT_RIFIUTA);
                 scanf(" %c", &confermaAzione);
                 if(confermaAzione == PROMPT_RIFIUTA) {
+                    svuotaBuffer();
                     return false; // il giocatore ha cambiato idea
                 } else if(confermaAzione != PROMPT_RIFIUTA && confermaAzione != PROMPT_CONFERMA) {
                     printf("\nInserisci un valore valido!");
@@ -990,7 +1001,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
 
         // logging
         scriviCartaGiocataSuLog(giocatore->nomeUtente, carta);
-
+        svuotaBuffer();
     // QUARTA PARTE: carte in gioco
     } else if (carta.tipologiaCarta == EFFETTO) {
         // la carta prigione viene verificata come prima, perché le altre sono tutte carte che sono giocate e inserite
@@ -1037,6 +1048,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                         } while (confermaAzione != PROMPT_CONFERMA && confermaAzione != PROMPT_RIFIUTA);
                         if(confermaAzione == PROMPT_RIFIUTA) {
                             printf("\nTorno al menu principale!");
+                            svuotaBuffer();
                             return false;
                         }
                     }
@@ -1071,6 +1083,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
             printf("\n%s ha messo in prigione %s!", giocatore->nomeUtente, giocatoreScelto->nomeUtente);
             // logging
             scriviCartaGiocataAvversarioSuLog(giocatore->nomeUtente, giocatoreScelto->nomeUtente, carta);
+            svuotaBuffer();
         } else { // qui invece verifico tutte le altre carte possibili
             // verifico che la carta scelta non sia già in gioco
             if(!possiedeCartaInGioco(*giocatore, carta.nomeCarta)) {
@@ -1084,6 +1097,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                     printf("\nHai giocato una carta '%s'!", CARTA_BARILE);
                     // logging
                     scriviCartaGiocataSuLog(giocatore->nomeUtente, carta);
+                    svuotaBuffer();
                 } else if (strcmp(carta.nomeCarta, CARTA_MIRINO) == 0) {
                     printf("\n%s DESCRIZIONE %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
                     printf("\nLa carta '%s' ti consente, fintanto che è in gioco,\n"
@@ -1094,6 +1108,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                     printf("\nHai equipaggiato la carta '%s'!", CARTA_MIRINO);
                     // logging
                     scriviCartaGiocataSuLog(giocatore->nomeUtente, carta);
+                    svuotaBuffer();
                 } else if (strcmp(carta.nomeCarta, CARTA_MUSTANG) == 0) {
                     printf("\n%s DESCRIZIONE %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
                     printf("\nLa carta '%s' ti consente, fintanto che è in gioco,\n"
@@ -1104,6 +1119,7 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                     printf("\nHai equipaggiato la carta '%s'!", CARTA_MUSTANG);
                     // logging
                     scriviCartaGiocataSuLog(giocatore->nomeUtente, carta);
+                    svuotaBuffer();
                 } else if (strcmp(carta.nomeCarta, CARTA_DINAMITE) == 0) {
                     printf("\n%s DESCRIZIONE %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
                     printf("\nLa carta '%s' resta innocua per un intero giro.\n"
@@ -1119,9 +1135,11 @@ bool giocaCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti, int nGiocatori, Giocatore
                     printf("\nHai messo un gioco una '%s'!\n", CARTA_DINAMITE);
                     // logging
                     scriviCartaGiocataSuLog(giocatore->nomeUtente, carta);
+                    svuotaBuffer();
                 }
             } else {
                 printf("\nHai già una carta '%s' in gioco!", carta.nomeCarta);
+                svuotaBuffer();
                 return false;
             }
         }

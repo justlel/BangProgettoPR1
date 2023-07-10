@@ -6,7 +6,6 @@
 #include "carta.h"
 #include "utils.h"
 
-#define MEZZO_SEPARATORE "-----------------"
 /**
  * Enumerazione contenente le varie tipologie che possono essere assegnate a un mazzo.
  */

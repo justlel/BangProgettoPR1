@@ -236,7 +236,7 @@ void mostraCarteMazzo(Mazzo mazzo) {
             printf("\n");
         }
     } else {
-        printf("\nNessuna carta presente!");
+        printf("\nNessuna carta presente!\n");
     }
 
     printf("%s CARTE %s\n", MEZZO_SEPARATORE, MEZZO_SEPARATORE);

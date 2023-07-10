@@ -19,7 +19,10 @@ void scriviMorteGiocatoreSuLog(char nomeGiocatoreMorto[]);
 
 void scriviCartaScartataSuLog(char nomeGiocatore[], Carta carta);
 
-void scriviCartaRubataPanico(char nomeGiocatore[], char nomeAttaccato[], Carta cartaRubata);
+void scriviCartaRubataPanicoSuLog(char nomeGiocatore[], char nomeAttaccato[], Carta cartaRubata);
 
-void scriviInizioTurno(int turno);
+void scriviInizioTurnoSuLog(int turno);
+
+void scriviVittoriaSuLog(char nomeVincitori[]);
+
 void pulisciLog();

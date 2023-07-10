@@ -1,6 +1,9 @@
 #include "partita.h"
 
 
+/**
+ * Subroutine che avvia il gioco, non appena il programma viene lanciato.
+ */
 void avvioGioco() {
     // il salvataggio da avviare
     Salvataggio partita;
@@ -206,6 +209,7 @@ void avviaPartita(Salvataggio partita) {
     Giocatore* giocatore = NULL;
 
     svuotaSchermo();
+    svuotaBuffer();
     // inizio della logica della partita
     while(!partitaTerminata(partita, &ruoloVincitore)) { // verifico che la partita non sia terminata
         // scrittura del file di salvataggio
@@ -215,7 +219,7 @@ void avviaPartita(Salvataggio partita) {
         giocatore = &partita.giocatori[partita.prossimoGiocatore];
 
         printf("\n\n%s TURNO n° %d %s", MEZZO_SEPARATORE, partita.prossimoGiocatore + 1, MEZZO_SEPARATORE);
-        scriviInizioTurno(partita.prossimoGiocatore + 1);
+        scriviInizioTurnoSuLog(partita.prossimoGiocatore + 1);
 
         // salvo il nome del ruolo del giocatore.
         prendiNomeRuolo(giocatore->ruoloAssegnato, ruoloGiocatore);
@@ -234,8 +238,6 @@ void avviaPartita(Salvataggio partita) {
             printf("\n%s CARTE IN GIOCO %s\n", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
 
             printf("\nPremi invio per continuare.");
-            while (getchar() != '\n')
-                continue;
             getchar();
 
             // imposto le variabili booleane ausiliarie
@@ -330,28 +332,38 @@ void avviaPartita(Salvataggio partita) {
                         // seconda scelta: mostro le carte nella mano del giocatore
                     case PROMPT_TURNO_VEDI_CARTE_MANO:
                         mostraCarteMazzo(giocatore->carteMano);
+                        svuotaBuffer();
                         break;
                         // terza scelta: mostro le carte in gioco del giocatore
                     case PROMPT_TURNO_VEDI_CARTE_GIOCO:
                         mostraCarteMazzo(giocatore->carteGioco);
+                        svuotaBuffer();
                         break;
                         // quarta scelta: mostro la distanza tra il giocatore e gli altri
                     case PROMPT_TURNO_VEDI_DISTANZE:
                         mostraDistanze(partita.nGiocatori, partita.giocatori, partita.prossimoGiocatore);
+                        svuotaBuffer();
                         break;
                         // quinta scelta: mostro le carte in gioco degli altri giocatori
                     case PROMPT_TURNO_VEDI_CARTE_GIOCO_ALTRI:
                         mostraCarteInGiocoAltri(partita.nGiocatori, partita.giocatori,partita.prossimoGiocatore);
+                        svuotaBuffer();
                         break;
                     case PROMPT_VEDI_VITA_ALTRI:
                         mostraVitaGiocatori(partita.nGiocatori, partita.giocatori);
+                        svuotaBuffer();
                         break;
                         // sesta scelta: passo il turno
                     case PROMPT_TURNO_PASSA_TURNO:
-                        printf("\nHai deciso di passare il turno! Sei sicuro?\n"
-                               "Ricorda che prima di passare, devi scartare le carte in eccesso.\n"
-                               "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
-                        scanf(" %c", &tmpChoice);
+                        do {
+                            printf("\nHai deciso di passare il turno! Sei sicuro?\n"
+                                   "Ricorda che prima di passare, devi scartare le carte in eccesso.\n"
+                                   "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                            scanf(" %c", &tmpChoice);
+                            if(tmpChoice != PROMPT_CONFERMA && tmpChoice != PROMPT_RIFIUTA)
+                                printf("\nInserisci un'azione valida!");
+                        } while (tmpChoice != PROMPT_CONFERMA && tmpChoice != PROMPT_RIFIUTA);
+
                         if (tmpChoice == PROMPT_CONFERMA) {
                             if(giocatore->carteMano.numeroCarte > giocatore->puntiVita) {
                                 carteDaScartare = giocatore->carteMano.numeroCarte - giocatore->puntiVita;
@@ -362,14 +374,21 @@ void avviaPartita(Salvataggio partita) {
                                 }
                             }
                             printf("\nBene, passiamo il turno al prossimo giocatore!");
+                            svuotaBuffer();
                             ripetiTurno = false;
                         }
                         break;
                         // ultima scelta: chiudo il gioco
                     case PROMPT_TURNO_ESCI:
-                        printf("\nSei sicuro di voler uscire?\n"
-                               "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
-                        scanf(" %c", &tmpChoice);
+                        do {
+                            printf("\nSei sicuro di voler uscire?\n"
+                                   "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                            scanf(" %c", &tmpChoice);
+                            if(tmpChoice != PROMPT_CONFERMA && tmpChoice != PROMPT_RIFIUTA)
+                                printf("\nInserisci un'azione valida!");
+                        } while (tmpChoice != PROMPT_CONFERMA && tmpChoice != PROMPT_RIFIUTA);
+
+                        // chiudo la partita salvando
                         if (tmpChoice == PROMPT_CONFERMA) {
                             chiudiGioco(&partita);
                         }
@@ -377,8 +396,6 @@ void avviaPartita(Salvataggio partita) {
 
                 // aspetto che il giocatore prema invio per tornare al menu principale
                 printf("\n\nPremi 'Invio' per tornare al menu principale.");
-                while (getchar() != '\n')
-                    continue;
                 getchar();
                 svuotaSchermo();
             } while (ripetiTurno && !partitaTerminata(partita, &ruoloVincitore)); // se in una delle sue azioni il giocatore ha scelto "annulla", allora ripeti il ciclo di scelta
@@ -392,8 +409,8 @@ void avviaPartita(Salvataggio partita) {
                 partita.prossimoGiocatore = (partita.prossimoGiocatore + 1) % partita.nGiocatori;
             } while(partita.giocatori[partita.prossimoGiocatore].puntiVita < 1);
             printf("\nIl prossimo giocatore sarà '%s'! Premi 'Invio' quando sei pronto a continuare.", partita.giocatori[partita.prossimoGiocatore].nomeUtente);
-            while (getchar() != '\n')
-                continue;
+            // azioni per pulire lo schermo in vista del prossimo turno
+            getchar();
             svuotaSchermo();
         }
     }
@@ -439,8 +456,6 @@ bool verificaCarteInGioco(Mazzo* mazzoPesca, Mazzo* mazzoScarti, int posizioneGi
 
             // aspetto che l'utente prema invio
             printf("\nPremi invio per estrarre una carta.");
-            while (getchar() != '\n')
-                continue;
             getchar();
 
             // la carta estratta fa esplodere la dinamite
@@ -478,8 +493,6 @@ bool verificaCarteInGioco(Mazzo* mazzoPesca, Mazzo* mazzoScarti, int posizioneGi
 
             // aspetto che l'utente prema invio
             printf("\nPremi invio per estrarre una carta.");
-            while (getchar() != '\n')
-                continue;
             getchar();
 
             // scarto comunque la carta prigione
@@ -499,7 +512,7 @@ bool verificaCarteInGioco(Mazzo* mazzoPesca, Mazzo* mazzoScarti, int posizioneGi
         printf("\nNon hai nessuna carta in gioco!");
     }
 
-    return true;
+    return true; // il giocatore non è morto e non deve saltare il turno
 }
 
 /**
@@ -601,8 +614,7 @@ Salvataggio caricaPartita() {
                "%c/%c) ", nomeSalvataggio, PROMPT_CONFERMA, PROMPT_RIFIUTA);
         scanf(" %c", &conferma);
         if(conferma != PROMPT_CONFERMA && conferma != PROMPT_RIFIUTA)
-            printf("\nInserisci una delle due opzioni\n"
-                   "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+            printf("\nInserisci un'azione valida!");
     } while(conferma != PROMPT_CONFERMA && conferma != PROMPT_RIFIUTA);
 
     // se l'utente ha confermato, carico il salvataggio, altrimenti chiudo il gioco
@@ -739,8 +751,9 @@ void chiudiPartita(Ruoli ruoloVincitore) {
     svuotaSchermo();
     printf("\n%s PARTITA TERMINATA %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
     printf("\nQuesta partita di 'Bang!' è terminata!\n");
-    printf("\nCongratulazioni ai vincitori di questa partita: '%s'!", nomeRuolo); // TODO: rivedere, per ora stampa solo le congratulazioni
+    printf("\nCongratulazioni ai vincitori di questa partita: '%s'!", nomeRuolo);
     printf("\n%s PARTITA TERMINATA %s\n\n", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
+    scriviVittoriaSuLog(nomeRuolo);
 }
 
 /**
