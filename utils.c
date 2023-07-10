@@ -3,7 +3,7 @@
 
 void assertPuntatoreNonNull(void* puntatore, char* messaggioErrore) {
     if (puntatore == NULL) {
-        printf("\n\n%s ERRORE %s\n", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
+        printf("\n\n%s ERRORE %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
         printf("%s", messaggioErrore);
         printf("\n%s ERRORE %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
         exit(-1);

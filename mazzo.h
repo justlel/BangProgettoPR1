@@ -25,18 +25,12 @@ typedef struct {
 } Mazzo;
 
 Mazzo caricaMazzo();
-
 void mischiaMazzo(Mazzo* mazzo);
-
 void scambiaPescaScarti(Mazzo* mazzoPesca, Mazzo* mazzoScarti);
-
 void mostraCarta(Carta carta);
 void mostraCarteMazzo(Mazzo mazzo);
-
 Carta estraiCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti);
-
 void rimuoviCartaMazzo(Mazzo* mazzo, int posizioneCarta);
 void aggiungiCartaMazzo(Mazzo* mazzo, Carta carta);
 void spostaCartaMazzo(Mazzo* partenza, Mazzo* destinazione, int posizioneCarta);
-
 int cercaCartaMazzoPerNome(Mazzo mazzo, char nomeCarta[]);

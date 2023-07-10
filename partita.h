@@ -7,32 +7,31 @@
 #include "utils.h"
 
 
-#define MEZZO_SEPARATORE "-----------------"
-// -------- MACRO RELATIVE ALLE IMPOSTAZIONI DELLA PARTITA --------
 /**
- * Numero minimo e massimo di giocatori per partita.
+ * Numero minimo di giocatori per partita.
  */
 #define MIN_PLAYERS 4
+/**
+ * Numero massimo di giocatori per partita.
+ */
 #define MAX_PLAYERS 7
 
-// -------- MACRO RELATIVE ALLE OPZIONI DEI PROMPT PER I GIOCATORI --------
 /**
  * Nei prompt in cui vengono presentate delle scelte al giocatore, l'inserimento di questo carattere (dove possibile)
  * comporta l'uscita dal gioco, oppure dall'azione correntemente in esecuzione.
  */
 #define PROMPT_EXIT 'E'
 /**
- * All'avvio del gioco, il giocatore inserisce uno di questi due caratteri per scegliere se caricare un salvataggio
- * o creare una nuova partita.
+ * Carattere da inserire nel prompt di avvio per scegliere di caricare un salvataggio
  */
 #define PROMPT_CARICA_PARTITA 'C'
-#define PROMPT_NUOVA_PARTITA 'N'
 /**
- * Caratteri che l'utente può inserire in un prompt per confermare/rifiutare una richiesta del programma.
+ * Carattere da inserire nel prompt di avvio per scegliere di creare un salvataggio
  */
-#define PROMPT_CONFERMA 'y'
-#define PROMPT_RIFIUTA 'n'
+#define PROMPT_NUOVA_PARTITA 'N'
 
+
+// Numeri rappresentanti una scelta all'interno del prompt del turno per un'azione da fare
 #define PROMPT_TURNO_GIOCA_CARTA 1
 #define PROMPT_TURNO_VEDI_CARTE_MANO 2
 #define PROMPT_TURNO_VEDI_CARTE_GIOCO 3
@@ -44,21 +43,15 @@
 
 
 void avvioGioco();
-
 Salvataggio caricaPartita();
-
 Salvataggio creaPartita();
 
 void assegnaRuoli(Giocatore* giocatori, int nGiocatori);
-
-// TODO: spostarlo
 void distribuisciCartePartenza(Mazzo *mazzoPesca, Mazzo *mazzoScarti, Giocatore *giocatori, int nGiocatori);
 
-bool verificaCarteInGioco(Mazzo* mazzoPesca, Mazzo* mazzoScarti, int posizioneGiocatore, Giocatore* giocatori, int nGiocatori);
-
 void avviaPartita(Salvataggio partita);
+bool verificaCarteInGioco(Mazzo* mazzoPesca, Mazzo* mazzoScarti, int posizioneGiocatore, Giocatore* giocatori, int nGiocatori);
 bool partitaTerminata(Salvataggio partita, Ruoli* ruoloVincitore);
 void chiudiPartita(Ruoli ruoloVincitore);
-
 void chiudiGioco(Salvataggio* partita);
 void liberaStrutture(Salvataggio* partita);

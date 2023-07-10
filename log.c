@@ -111,7 +111,7 @@ void scriviPrigioneSuLog(char nomeGiocatore[], Carta cartaEstratta) {
  * @param nomeAvversario Il giocatore contro cui la carta è giocata.
  * @param carta La carta giocata.
  */
-void scriviCartaGiocataAvversario(char nomeGiocatore[], char nomeAvversario[], Carta carta) {
+void scriviCartaGiocataAvversarioSuLog(char nomeGiocatore[], char nomeAvversario[], Carta carta) {
     // puntatore al file contenente i log
     FILE* logFile = NULL;
 
@@ -184,7 +184,7 @@ void scriviCartaRubataPanico(char nomeGiocatore[], char nomeAttaccato[], Carta c
     assertPuntatoreNonNull(logFile, "\nErrore: impossibile aprire il file di log.");
 
     // scrittura carta
-    fprintf(logFile, "%s ha usato 'Panico!' e ruba una carta '%s' a '%s'!\n", nomeGiocatore, cartaRubata.nomeCarta, nomeAttaccato);
+    fprintf(logFile, "%s ha usato '%s!' e ruba una carta '%s' a '%s'!\n", nomeGiocatore, CARTA_PANICO, cartaRubata.nomeCarta, nomeAttaccato);
 
     // chiusura del file
     fclose(logFile);
@@ -230,7 +230,7 @@ void scriviMancatoSuLog(char nomeGiocatore[]) {
     assertPuntatoreNonNull(logFile, "\nErrore: impossibile aprire il file di log.");
 
     // scrittura carta giocata
-    fprintf(logFile, "%s evita l'attacco giocando un 'Mancato'!\n", nomeGiocatore);
+    fprintf(logFile, "%s evita l'attacco giocando un '%s'!\n", nomeGiocatore, CARTA_MANCATO);
 
     // chiusura del file
     fclose(logFile);
@@ -276,7 +276,7 @@ void scriviMorteGiocatoreSuLog(char nomeGiocatoreMorto[]) {
     logFile = fopen(LOG_FILE_NAME, "a");
     assertPuntatoreNonNull(logFile, "\nErrore: impossibile aprire il file di log.");
 
-    // scrittura punti vita persi
+    // scrittura morte
     fprintf(logFile, "MORTE! %s ha perso tutti i suoi punti vita, e viene eliminato!\n", nomeGiocatoreMorto);
 
     // chiusura del file

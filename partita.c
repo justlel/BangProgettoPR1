@@ -58,6 +58,8 @@ Salvataggio creaPartita() {
     Salvataggio partita;
     // boolean di appoggio per verificare che un nickname sia valido
     bool verificaNome = true;
+    // carattere di appoggio per confermare il salvataggio
+    char confermaSalvataggio;
 
     printf("\nBene, iniziamo allora! Bang! è un gioco multiplayer, a cui è possibile "
            "giocare in compagnia da un minimo di %d a un massimo di %d persone.\n"
@@ -84,21 +86,29 @@ Salvataggio creaPartita() {
         do {
             verificaNome = true;
             printf("\nGiocatore %d: ", i+1);
-            scanf(" %49s", partita.giocatori[i].nomeUtente);
+            scanf(" %49[^\n]s", partita.giocatori[i].nomeUtente);
 
             // verifico che il nome non sia vuoto
-            if(strcmp(partita.giocatori[i].nomeUtente, "") == 0) {
-                verificaNome = false;
-                printf("\nInserisci un nickname!");
-            } else {
-                // verifica che il nome non sia già stato inserito
-                for(j = i-1; j >= 0; j--) {
-                    // il nome è già stato inserito!
-                    if(strcmp(partita.giocatori[j].nomeUtente, partita.giocatori[i].nomeUtente) == 0) {
+            if(strcmp(partita.giocatori[i].nomeUtente, "") != 0) {
+                // verifico che il nome non contenga spazi
+                for(j = 0; j < strlen(partita.giocatori[i].nomeUtente) && verificaNome; j++) {
+                    if(partita.giocatori[i].nomeUtente[j] == ' ')
                         verificaNome = false;
-                        printf("\nQuesto nome è già stato inserito! Riprova.");
-                    }
                 }
+                if(verificaNome) {
+                    // verifica che il nome non sia già stato inserito
+                    for(j = i-1; j >= 0; j--) {
+                        // il nome è già stato inserito!
+                        if(strcmp(partita.giocatori[j].nomeUtente, partita.giocatori[i].nomeUtente) == 0) {
+                            verificaNome = false;
+                            printf("\nQuesto nome è già stato inserito! Riprova.");
+                        }
+                    }
+                } else {
+                    printf("\nIl tuo nome non può contenere spazi! Riprova.");
+                }
+            } else {
+                printf("\nInserisci un nickname!");
             }
         } while (!verificaNome);
 
@@ -110,7 +120,6 @@ Salvataggio creaPartita() {
     // assegnazione dei ruoli dei giocatori
     printf("Piacere di conoscervi! Adesso genererò randomicamente i ruoli di ognuno di voi.\n");
     assegnaRuoli(partita.giocatori, partita.nGiocatori);
-
 
     // caricamento del mazzoPesca dal file "mazzo_bang.txt"
     printf("\nI ruoli sono stati assegnati! Carico il mazzo di pesca di carte dal file di testo...\n");
@@ -145,10 +154,21 @@ Salvataggio creaPartita() {
                "in cui sarà memorizzata questa partita (max. %d caratteri)\n", SAVEGAME_NAME_LEN);
         printf("?) ");
         scanf(" %16s", partita.nomeSalvataggio);
-        if(salvataggioEsistente(partita.nomeSalvataggio))
-            printf("\nQuesto salvataggio esiste già! Riprova.");
-    } while (salvataggioEsistente(partita.nomeSalvataggio));
-
+        if(salvataggioEsistente(partita.nomeSalvataggio)) {
+            // chiedo all'utente se vuole sovrascrivere il salvataggio
+            do {
+                printf("\nIl salvataggio esiste già! Vuoi sovrascriverlo?\n"
+                       "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
+                scanf(" %c", &confermaSalvataggio);
+                if(confermaSalvataggio == PROMPT_RIFIUTA) {
+                    printf("\nInserisci un altro nome!");
+                    strcpy(partita.nomeSalvataggio, ""); // annullo il salvataggio scelto
+                } else if(confermaSalvataggio != PROMPT_RIFIUTA && confermaSalvataggio != PROMPT_CONFERMA) {
+                    printf("\nInserisci un'azione valida!");
+                }
+            } while (confermaSalvataggio != PROMPT_RIFIUTA && confermaSalvataggio != PROMPT_CONFERMA);
+        }
+    } while (strcmp(partita.nomeSalvataggio, "") == 0);
 
     // scrittura del nuovo salvataggio
     scriviSalvataggio(partita, partita.nomeSalvataggio);
@@ -158,42 +178,36 @@ Salvataggio creaPartita() {
     return partita;
 }
 
+/**
+ * Funzione che avvia una partita a partire dal salvataggio fornito.
+ * Contiene tutta la logica del turno e della vittoria.
+ *
+ * @param partita Il salvataggio da cui avviare la partita.
+ */
 void avviaPartita(Salvataggio partita) {
     int i;
     // variabili booleane di appoggio per i cicli sottostanti
     bool ripetizioneCiclo, ripetiTurno = true;
     // variabili booleane che mantengono informazioni sulle carte giocate nei turni precedenti
     bool bangGiocato, cartaGiocata = false;
-
     // variabili di tipo int di appoggio per la selezioni delle carte da giocare e delle opzioni dei prompt durante il turno
     int promptTurnoScelta, posizioneCartaSelezionata;
-
     // variabile che contiene il numero di carte da scartare a fine turno
     int carteDaScartare;
-
     // variabili di tipo char di appoggio per la selezione delle opzioni nei prompt durante il turno
     char ruoloGiocatore[NOME_RUOLO_LEN_MAX + 1], tmpChoice;
-
     // variabile "Carta" contenente la carta da giocare in questo turno
     Carta cartaSelezionata;
     // carta contenente l'arma del giocatore corrente
     Carta armaGiocatore;
-
     // variabile contenente il ruolo dei vincitori al termine della partita
-    Ruoli* ruoloVincitore = NULL;
-
+    Ruoli ruoloVincitore;
     // puntatore al giocatore del turno corrente
     Giocatore* giocatore = NULL;
 
-    // allocazione dinamica dei puntatori e verifica
-    ruoloVincitore = (Ruoli*) malloc(sizeof(Ruoli));
-    giocatore = (Giocatore*) malloc(sizeof(Giocatore));
-    assertPuntatoreNonNull(ruoloVincitore, "\nErrore: impossibile allocare memoria dinamicamente.");
-    assertPuntatoreNonNull(giocatore, "\nErrore: impossibile allocare memoria dinamicamente.");
-
     svuotaSchermo();
     // inizio della logica della partita
-    while(!partitaTerminata(partita, ruoloVincitore)) { // verifico che la partita non sia terminata
+    while(!partitaTerminata(partita, &ruoloVincitore)) { // verifico che la partita non sia terminata
         // scrittura del file di salvataggio
         scriviSalvataggio(partita, partita.nomeSalvataggio);
 
@@ -218,6 +232,12 @@ void avviaPartita(Salvataggio partita) {
         // se le carte in gioco permettono al giocatore di continuare, allora inizia il turno
         if(verificaCarteInGioco(&partita.mazzoPesca, &partita.mazzoScarti, partita.prossimoGiocatore, partita.giocatori, partita.nGiocatori)) {
             printf("\n%s CARTE IN GIOCO %s\n", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
+
+            printf("\nPremi invio per continuare.");
+            while (getchar() != '\n')
+                continue;
+            getchar();
+
             // imposto le variabili booleane ausiliarie
             bangGiocato = false;
             ripetiTurno = true;
@@ -255,74 +275,57 @@ void avviaPartita(Salvataggio partita) {
                 switch (promptTurnoScelta) {
                     // il giocatore ha deciso di giocare una carta
                     case PROMPT_TURNO_GIOCA_CARTA:
-                        // chiedo al giocatore di scegliere una carta
-                        do {
-                            // verifico che il mazzo di mano non sia vuoto
-                            if(giocatore->carteMano.numeroCarte < 1) {
-                                printf("\nNon hai carte nella tua mano!");
-                                break;
-                            }
-                            // se il ciclo è stato ripetuto, chiedo al giocatore se desidera giocare un'altra carta
-                            if(ripetizioneCiclo) {
-                                printf("\n\nDesideri giocare un'altra carta?\n"
-                                       "%c/%c) ", PROMPT_CONFERMA, PROMPT_RIFIUTA);
-                                scanf(" %c", &tmpChoice);
-                                // torno al menu principale
-                                if(tmpChoice == PROMPT_RIFIUTA)
-                                    break;
-                            }
+                        // verifico che il mazzo di mano non sia vuoto
+                        if(giocatore->carteMano.numeroCarte > 0) {
+                            // chiedo all'utente di scegliere una carta
+                            do {
+                                printf("\nBene, queste sono le carte nella tua mano!");
+                                // mostro le carte nella mano del giocatore
+                                mostraCarteMazzo(giocatore->carteMano);
+                                printf("\nInserisci il numero della carta da selezionare: ");
+                                scanf("%d", &posizioneCartaSelezionata);
 
-                            ripetizioneCiclo = false;
+                                // verifico che la scelta sia valida
+                                if (posizioneCartaSelezionata <= 0 || posizioneCartaSelezionata > giocatore->carteMano.numeroCarte)
+                                    printf("\nInserisci una posizione valida!");
+                            } while (posizioneCartaSelezionata <= 0 || posizioneCartaSelezionata > giocatore->carteMano.numeroCarte);
 
-                            printf("\nBene, queste sono le carte nella tua mano!");
-                            // mostro le carte nella mano del giocatore
-                            mostraCarteMazzo(giocatore->carteMano);
-                            printf("\nInserisci il numero della carta da selezionare: ");
-                            scanf("%d", &posizioneCartaSelezionata);
+                            cartaSelezionata = giocatore->carteMano.carte[posizioneCartaSelezionata - 1];
 
-                            // verifico che la scelta sia valida
-                            if (posizioneCartaSelezionata > 0 && posizioneCartaSelezionata <= giocatore->carteMano.numeroCarte) {
-                                cartaSelezionata = giocatore->carteMano.carte[posizioneCartaSelezionata - 1];
-                                // 'Bang!' può essere giocata solo una volta (ammenoché non si possegga una 'Volcanic' come arma)
-                                if (strcmp(cartaSelezionata.nomeCarta, "Bang!") == 0) {
-                                    armaGiocatore = prendiArmaGiocatore(*giocatore);
-                                    // il giocatore deve selezionare un'altra carta perché non può giocare un altro bang
-                                    if (bangGiocato && strcmp(armaGiocatore.nomeCarta, "Volcanic") != 0) {
-                                        printf("\nHai già giocato un 'Bang!' in questo turno!");
-                                        ripetizioneCiclo = true; // scelta invalida, il giocatore deve scegliere un'altra carta
-                                        continue;
-                                    }
+                            // 'Bang!' può essere giocata solo una volta (ammenoché non si possegga una 'Volcanic' come arma)
+                            if (strcmp(cartaSelezionata.nomeCarta, "Bang!") == 0) {
+                                armaGiocatore = prendiArmaGiocatore(*giocatore);
+                                // il giocatore deve selezionare un'altra carta perché non può giocare un altro bang
+                                if (bangGiocato && strcmp(armaGiocatore.nomeCarta, CARTA_VOLCANIC) != 0) {
+                                    printf("\nHai già giocato un '%s' in questo turno!", CARTA_BANG);
+                                    break; // scelta invalida, non possono essere giocati più bang
                                 }
-
-                                svuotaSchermo();
-
-                                // la funzione 'giocaCarta' restituisce "False" se la carta non è stata giocata per qualsiasi motivo
-                                // salvo in una variabile booleana un valore che indica se la carta è stata effettivamente giocata o meno
-                                cartaGiocata = giocaCarta(
-                                        &partita.mazzoPesca, &partita.mazzoScarti, partita.nGiocatori,
-                                        partita.giocatori,
-                                        partita.prossimoGiocatore, posizioneCartaSelezionata - 1);
-
-                                if(cartaGiocata) {
-                                    // se la carta giocata è un 'Bang!', allora impedisco al giocatore di giocarla ancora
-                                    if (strcmp(cartaSelezionata.nomeCarta, "Bang!") == 0)
-                                        bangGiocato = true;
-                                    // se la carta non è della tipologia "in gioco" o "arma", scarto la carta dalla mano del giocatore
-                                    // potrebbe succedere che, nell'uccisione di uno sceriffo, un giocatore sia già obbligato a scartare le sue carte
-                                    if(cartaSelezionata.tipologiaCarta != ARMA &&
-                                       cartaSelezionata.tipologiaCarta != EFFETTO &&
-                                       giocatore->carteMano.numeroCarte > 0) {
-                                        aggiungiCartaMazzo(&partita.mazzoScarti, cartaSelezionata);
-                                        rimuoviCartaMazzo(&giocatore->carteMano, posizioneCartaSelezionata - 1);
-                                    }
-                                } else { // permetto al giocatore di giocare un'altra carta
-                                    ripetizioneCiclo = true;
-                                }
-                            } else {
-                                printf("\nIl numero inserito non è valido!");
-                                ripetizioneCiclo = true; // il valore è invalido: ripeto la richiesta
                             }
-                        } while (ripetizioneCiclo);
+
+                            svuotaSchermo();
+
+                            // la funzione 'giocaCarta' restituisce "False" se la carta non è stata giocata per qualsiasi motivo
+                            // salvo in una variabile booleana un valore che indica se la carta è stata effettivamente giocata o meno
+                            cartaGiocata = giocaCarta(
+                                    &partita.mazzoPesca, &partita.mazzoScarti, partita.nGiocatori,
+                                    partita.giocatori,
+                                    partita.prossimoGiocatore, posizioneCartaSelezionata - 1);
+
+                            if(cartaGiocata) {
+                                // se la carta giocata è un 'Bang!', allora impedisco al giocatore di giocarla ancora
+                                if (strcmp(cartaSelezionata.nomeCarta, CARTA_BANG) == 0)
+                                    bangGiocato = true;
+                                // se la carta non è della tipologia "in gioco" o "arma", scarto la carta dalla mano del giocatore
+                                // potrebbe succedere che, nell'uccisione di uno sceriffo, un giocatore sia già obbligato a scartare le sue carte
+                                if(cartaSelezionata.tipologiaCarta != ARMA &&
+                                   cartaSelezionata.tipologiaCarta != EFFETTO &&
+                                   giocatore->carteMano.numeroCarte > 0) {
+                                    spostaCartaMazzo(&giocatore->carteMano, &partita.mazzoScarti, posizioneCartaSelezionata - 1);
+                                }
+                            }
+                        } else {
+                            printf("\nNon hai carte nella tua mano!");
+                        }
                         break;
                         // seconda scelta: mostro le carte nella mano del giocatore
                     case PROMPT_TURNO_VEDI_CARTE_MANO:
@@ -373,17 +376,16 @@ void avviaPartita(Salvataggio partita) {
                 }
 
                 // aspetto che il giocatore prema invio per tornare al menu principale
-                printf("\nPremi 'Invio' per tornare al menu principale.");
+                printf("\n\nPremi 'Invio' per tornare al menu principale.");
                 while (getchar() != '\n')
                     continue;
                 getchar();
                 svuotaSchermo();
-            } while (ripetiTurno && !partitaTerminata(partita, ruoloVincitore)); // se in una delle sue azioni il giocatore ha scelto "annulla", allora ripeti il ciclo di scelta
+            } while (ripetiTurno && !partitaTerminata(partita, &ruoloVincitore)); // se in una delle sue azioni il giocatore ha scelto "annulla", allora ripeti il ciclo di scelta
         }
 
-        if(!partitaTerminata(partita, ruoloVincitore)) {
+        if(!partitaTerminata(partita, &ruoloVincitore)) {
             // turno terminato
-            svuotaSchermo();
             printf("\n\n%s TURNO TERMINATO %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
             // seleziono il prossimo giocatore in vita per il turno successivo
             do {
@@ -392,13 +394,14 @@ void avviaPartita(Salvataggio partita) {
             printf("\nIl prossimo giocatore sarà '%s'! Premi 'Invio' quando sei pronto a continuare.", partita.giocatori[partita.prossimoGiocatore].nomeUtente);
             while (getchar() != '\n')
                 continue;
+            svuotaSchermo();
         }
     }
     // fine logica del turno
 
     // fine partita
     scriviSalvataggio(partita, partita.nomeSalvataggio);
-    chiudiPartita(*ruoloVincitore);
+    chiudiPartita(ruoloVincitore);
 }
 
 /**
@@ -426,13 +429,19 @@ bool verificaCarteInGioco(Mazzo* mazzoPesca, Mazzo* mazzoScarti, int posizioneGi
 
     // verifico in primis che il giocatore abbia delle carte in gioco
     if(giocatore->carteGioco.numeroCarte > 0) {
-        int posizioneCartaDinamite = cercaCartaMazzoPerNome(giocatore->carteGioco, "Dinamite");
-        int posizioneCartaPrigione = cercaCartaMazzoPerNome(giocatore->carteGioco, "Prigione");
+        int posizioneCartaDinamite = cercaCartaMazzoPerNome(giocatore->carteGioco, CARTA_DINAMITE);
+        int posizioneCartaPrigione = cercaCartaMazzoPerNome(giocatore->carteGioco, CARTA_PRIGIONE);
         // ricerco la carta in gioco "dinamite"
         if(posizioneCartaDinamite != -1) {
             printf("\nHai in gioco una carta 'Dinamite'! Ora sarà estratta una carta che potrebbe farla esplodere o meno.");
             cartaEstratta = estraiCarta(mazzoPesca, mazzoScarti);
             scriviCartaEstrattaSuLog(giocatore->nomeUtente, cartaEstratta); // loggo la carta estratta
+
+            // aspetto che l'utente prema invio
+            printf("\nPremi invio per estrarre una carta.");
+            while (getchar() != '\n')
+                continue;
+            getchar();
 
             // la carta estratta fa esplodere la dinamite
             if(cartaEstratta.numeroCarta >= 2 && cartaEstratta.numeroCarta <= 9 && cartaEstratta.semeCarta == PICCHE) {
@@ -466,6 +475,12 @@ bool verificaCarteInGioco(Mazzo* mazzoPesca, Mazzo* mazzoScarti, int posizioneGi
         if(posizioneCartaPrigione != -1) {
             printf("\nSei in prigione! Ora sarà estratta una carta: se il suo seme sarà di Cuori, potrai evadere, altrimenti salterai il turno!");
             cartaEstratta = estraiCarta(mazzoPesca, mazzoScarti);
+
+            // aspetto che l'utente prema invio
+            printf("\nPremi invio per estrarre una carta.");
+            while (getchar() != '\n')
+                continue;
+            getchar();
 
             // scarto comunque la carta prigione
             spostaCartaMazzo(&giocatore->carteGioco, mazzoScarti, posizioneCartaDinamite);
@@ -697,11 +712,6 @@ void distribuisciCartePartenza(Mazzo *mazzoPesca, Mazzo *mazzoScarti, Giocatore 
 
     // iterazione sui giocatori
     for(i = 0; i < nGiocatori; i++) {
-        // allocazione dinamica del campo contenente le carte di ogni giocatore
-        giocatori[i].carteMano.carte = (Carta*) calloc(giocatori[i].puntiVita, sizeof(Carta));
-        // verifica dell'allocazione dinamica
-        assertPuntatoreNonNull(giocatori[i].carteMano.carte, "\nErrore: impossibile allocare dinamicamente il mazzo di carte del giocatore. Arresto.");
-
         // a ogni giocatore vengono assegnate le carte dalla cima del mazzo, per un numero totale pari ai suoi punti vita
         pescaCarte(mazzoPesca, mazzoScarti, &giocatori[i], giocatori[i].puntiVita);
     }
@@ -729,7 +739,7 @@ void chiudiPartita(Ruoli ruoloVincitore) {
     svuotaSchermo();
     printf("\n%s PARTITA TERMINATA %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
     printf("\nQuesta partita di 'Bang!' è terminata!\n");
-    printf("\nCongratulazioni ai vincitori di questa partita: '%s'!\n", nomeRuolo); // TODO: rivedere, per ora stampa solo le congratulazioni
+    printf("\nCongratulazioni ai vincitori di questa partita: '%s'!", nomeRuolo); // TODO: rivedere, per ora stampa solo le congratulazioni
     printf("\n%s PARTITA TERMINATA %s\n\n", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
 }
 

@@ -14,9 +14,7 @@
  */
 #define SEME_CARTA_LEN 6
 
-/**
- * Interi contenenti le gittate di tutte le armi
- */
+// gittata delle armi
 #define GITTATA_CARABINA 4
 #define GITTATA_REMINGTON 3
 #define GITTATA_SCHOFIELD 2
@@ -34,13 +32,39 @@ typedef enum {ISTANTANEA=1, ISTANTANEA_SPECIAL, ARMA, EFFETTO} tipologieCarta;
  */
 typedef enum {CUORI, QUADRI, FIORI, PICCHE} semiCarta;
 
+// Macro contenenti i nomi delle carte presenti nel mazzo da caricare
+#define CARTA_BANG "Bang!"
+#define CARTA_BIRRA "Birra"
+#define CARTA_CATBALOU "CatBalou"
+#define CARTA_DILIGENZA "Diligenza"
+#define CARTA_GATLING "Gatling"
+#define CARTA_MANCATO "Mancato"
+#define CARTA_PANICO "Panico!"
+#define CARTA_SALOON "Saloon"
+#define CARTA_WELLSFARGO "WellsFargo"
+#define CARTA_INDIANI "Indiani"
+#define CARTA_DUELLO "Duello"
+#define CARTA_EMPORIO "Emporio"
+#define CARTA_REMINGTON "Remington"
+#define CARTA_CARABINA "Carabina"
+#define CARTA_SCHOFIELD "Schofield"
+#define CARTA_WINCHESTER "Winchester"
+#define CARTA_VOLCANIC "Volcanic"
+#define CARTA_COLT45 "Colt. 45"
+#define CARTA_BARILE "Barile"
+#define CARTA_DINAMITE "Dinamite"
+#define CARTA_MIRINO "Mirino"
+#define CARTA_MUSTANG "Mustang"
+#define CARTA_PRIGIONE "Prigione"
+
+
 /**
  * Struct 'Carta', che comprende tutte le informazioni relative
  * a una carta utilizzabile in gioco:
- * * Una stringa contenente il nome di una carta (di lunghezza max. pari a 'NOME_CARTA_LEN')
- * * La tipologia della carta, ossia uno dei valori dell'enum 'tipologieCarta'
- * * Un intero che indica il numero della carta, compreso tra i numeri 1 e 13
- * * Il seme della carta, ossia uno dei valori dell'enum 'semiCarta'
+ * Una stringa contenente il nome di una carta (di lunghezza max. pari a 'NOME_CARTA_LEN')
+ * La tipologia della carta, ossia uno dei valori dell'enum 'tipologieCarta'
+ * Un intero che indica il numero della carta, compreso tra i numeri 1 e 13
+ * Il seme della carta, ossia uno dei valori dell'enum 'semiCarta'
  */
 typedef struct {
     char nomeCarta[NOME_CARTA_LEN + 1];
@@ -49,6 +73,6 @@ typedef struct {
     semiCarta semeCarta;
 } Carta;
 
-void prendiTipologiaCarta(tipologieCarta tipologiaCarta, char nomeTipologia[TIPOLOGIA_CARTA_LEN + 1]);
-void prendiSemeCarta(semiCarta semeCarta, char nomeSeme[SEME_CARTA_LEN + 1]);
+void prendiTipologiaCarta(tipologieCarta tipologiaCarta, char nomeTipologia[]);
+void prendiSemeCarta(semiCarta semeCarta, char nomeSeme[]);
 void svuotaSchermo();

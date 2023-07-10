@@ -8,7 +8,7 @@ void scriviCartaEstrattaSuLog(char nomeGiocatore[], Carta carta);
 void scriviDinamiteSuLog(char nomeGiocatore[], Carta cartaEstratta);
 void scriviPrigioneSuLog(char nomeGiocatore[], Carta cartaEstratta);
 
-void scriviCartaGiocataAvversario(char nomeGiocatore[], char nomeAvversario[], Carta carta);
+void scriviCartaGiocataAvversarioSuLog(char nomeGiocatore[], char nomeAvversario[], Carta carta);
 void scriviCartaGiocataSuLog(char nomeGiocatore[], Carta carta);
 
 void scriviBarileSuLog(char nomeGiocatore[], Carta cartaEstratta);

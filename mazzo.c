@@ -121,36 +121,36 @@ Carta estraiCarta(Mazzo *mazzoPesca, Mazzo *mazzoScarti) {
  * @return L'indice della carta se viene trovata, -1 altrimenti
  */
 int cercaCartaMazzoPerNome(Mazzo mazzo, char nomeCarta[]) {
-    int i;
+    int i = 0;
 
-    for(i = 0; i < mazzo.numeroCarte; i++) {
+    // cerco per tutto il mazzo finché non trovo la carta con il nome dato
+    while(i < mazzo.numeroCarte) {
         if(strcmp(nomeCarta, mazzo.carte[i].nomeCarta) == 0)
             return i;
+        i++;
     }
+
+    // restituisco -1 se non trovo nulla
     return -1;
 }
 
 void rimuoviCartaMazzo(Mazzo* mazzo, int posizioneCarta) {
     int i;
-    //Carta* nuovoMazzo = NULL;
 
-    // dimunisco di uno il numero di carte
+    // diminuisco di uno il numero di carte
     mazzo->numeroCarte--;
-
-    //nuovoMazzo = (Carta*) calloc(mazzo->numeroCarte, sizeof(Carta));
-    //assertPuntatoreNonNull(nuovoMazzo, "\nImpossibile allocare dinamicamente memoria.");
 
     // se il mazzo è vuoto, libero la memoria
     if(mazzo->numeroCarte == 0 && mazzo->carte != NULL) {
         free(mazzo->carte);
         mazzo->carte = NULL;
     } else if(mazzo->numeroCarte > 0) {
-        // altrimenti, rialloco la memoria dell'array di carte diminuendo lo spazio di uno
         // a partire dalla posizione della carta da rimuovere, sposto tutte le carte indietro di uno
         for(i = posizioneCarta; i <= mazzo->numeroCarte - 1; i++) {
             mazzo->carte[i] = mazzo->carte[i+1];
         }
 
+        // rialloco la memoria dell'array di carte diminuendo lo spazio di uno
         mazzo->carte = (Carta*) realloc(mazzo->carte, sizeof(Carta) * mazzo->numeroCarte);
         assertPuntatoreNonNull(mazzo->carte, "\nErrore: la riallocazione dinamica del mazzo di carte dopo la rimozione non è riuscita.");
     } else {
@@ -173,9 +173,9 @@ void aggiungiCartaMazzo(Mazzo* mazzo, Carta carta) {
     mazzo->numeroCarte++;
 
     // allocazione dinamica e verifica
-    if(mazzo->numeroCarte > 0 && mazzo->carte == NULL) { // primo caso, il mazzo è nullo, quindi lo alloco dinamicamente
+    if(mazzo->numeroCarte == 1 && mazzo->carte == NULL) { // primo caso, il mazzo è nullo, quindi lo alloco dinamicamente
         mazzo->carte = (Carta*) calloc(mazzo->numeroCarte, sizeof(Carta));
-    } else if(mazzo->numeroCarte > 0 && mazzo->carte != NULL) { // secondo caso, il mazzo ha già delle carte, quindi rialloco soltanto
+    } else if(mazzo->numeroCarte > 1 && mazzo->carte != NULL) { // secondo caso, il mazzo ha già delle carte, quindi rialloco soltanto
         mazzo->carte = (Carta*) realloc(mazzo->carte, mazzo->numeroCarte * sizeof(Carta));
     } else { // terzo caso, un ibrido tra i due, quindi non posso allocare correttamente (il mazzo dovrebbe avere già una carta, ma il puntatore è NULL)
         printf("\nErrore: il numero di carte del mazzo è %d, ma il puntatore contenente le carte è nullo.", mazzo->numeroCarte);
@@ -229,15 +229,17 @@ void mostraCarteMazzo(Mazzo mazzo) {
 
     printf("\n%s CARTE %s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
 
-    if(mazzo.numeroCarte == 0)
-        printf("\nNessuna carta presente!\n");
-    for(i = 0; i < mazzo.numeroCarte; i++) {
-        printf("\n%d) ", i+1);
-        mostraCarta(mazzo.carte[i]);
-        printf("\n");
+    if(mazzo.numeroCarte > 0) {
+        for(i = 0; i < mazzo.numeroCarte; i++) {
+            printf("\n%d) ", i+1);
+            mostraCarta(mazzo.carte[i]);
+            printf("\n");
+        }
+    } else {
+        printf("\nNessuna carta presente!");
     }
 
-    printf("%s-------%s", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
+    printf("%s CARTE %s\n", MEZZO_SEPARATORE, MEZZO_SEPARATORE);
 }
 
 /**
@@ -248,7 +250,7 @@ void mostraCarteMazzo(Mazzo mazzo) {
  * @param mazzoScarti Puntatore al mazzo di scarti.
  */
 void scambiaPescaScarti(Mazzo* mazzoPesca, Mazzo* mazzoScarti) {
-    printf("\nIl mazzo di pesca è vuoto! Rigenerazione dal mazzo di scarti in corso...");
+    printf("\nIl mazzo di pesca è vuoto! Rigenerazione dal mazzo di scarti in corso...\n");
 
     if(mazzoPesca->numeroCarte != 0) {
         printf("\nErrore: non è possibile scambiare il mazzo di pesca con quello di scarti se il primo non è vuoto.");
